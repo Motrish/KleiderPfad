@@ -23,21 +23,28 @@ export async function getContext() {
     set: { displayName, email: session.user?.email ?? null },
   }).returning())[0];
 
-  await db.transaction(async (tx) => {
-    // Prevent duplicate default households during concurrent first login requests.
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${user.id}::text))`);
-    const existing = await tx.select({ householdId: householdMembers.householdId })
-      .from(householdMembers).where(eq(householdMembers.userId, user.id)).limit(1);
-    if (!existing.length) {
-      const [household] = await tx.insert(households)
-        .values({ name: "Mein Haushalt" }).returning();
-      await tx.insert(householdMembers).values({ userId: user.id, householdId: household.id, role: "owner" });
-    }
-  });
-  const memberships = await db.select({
-    id: households.id, name: households.name, role: householdMembers.role,
-  }).from(householdMembers).innerJoin(households, eq(householdMembers.householdId, households.id))
-    .where(eq(householdMembers.userId, user.id)).orderBy(asc(households.createdAt));
+  async function loadMemberships() {
+    return db.select({
+      id: households.id, name: households.name, role: householdMembers.role,
+    }).from(householdMembers).innerJoin(households, eq(householdMembers.householdId, households.id))
+      .where(eq(householdMembers.userId, user.id)).orderBy(asc(households.createdAt));
+  }
+  let memberships = await loadMemberships();
+  if(!memberships.length) {
+    await db.transaction(async (tx) => {
+      // Serialize first-time creation across simultaneous requests.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${user.id}::text))`);
+      const existing = await tx.select({ householdId: householdMembers.householdId })
+        .from(householdMembers).where(eq(householdMembers.userId, user.id)).limit(1);
+      if (!existing.length) {
+        const [household] = await tx.insert(households).values({ name: "Mein Haushalt" }).returning();
+        await tx.insert(householdMembers).values({
+          userId: user.id, householdId: household.id, role: "owner",
+        });
+      }
+    });
+    memberships = await loadMemberships();
+  }
   const preferred = (await cookies()).get("kp_household")?.value;
   const household = memberships.find((m) => m.id === preferred) ?? memberships[0];
   if (!household) throw new Error("No household assigned");
