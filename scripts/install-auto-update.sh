@@ -2,8 +2,11 @@
 # Install a 60-second systemd timer to deploy changes without inbound SSH.
 set -Eeuo pipefail
 if [[ "$EUID" == "0" ]]; then
-  echo "Run this script as your normal Docker user (not with sudo)." >&2
-  exit 1
+  echo "Warning: auto-deployment running as root grants Git-sourced code root privileges." >&2
+  ROOT_CMD=()
+else
+  command -v sudo >/dev/null || { echo "sudo is required to install systemd units." >&2; exit 1; }
+  ROOT_CMD=(sudo)
 fi
 
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -14,12 +17,11 @@ if [[ ! "$REPO_DIR" =~ ^/[a-zA-Z0-9_./-]+$ ]]; then
   exit 1
 fi
 [[ -f "$REPO_DIR/.env" ]] || { echo "Missing .env in $REPO_DIR" >&2; exit 1; }
-command -v sudo >/dev/null || { echo "sudo is required." >&2; exit 1; }
 command -v systemctl >/dev/null || { echo "systemd is required." >&2; exit 1; }
 docker info >/dev/null || { echo "Current user must be able to run Docker without sudo." >&2; exit 1; }
 docker compose version >/dev/null || { echo "Docker Compose v2 is required." >&2; exit 1; }
 
-sudo tee /etc/systemd/system/kleiderpfad-update.service >/dev/null <<EOF
+"${ROOT_CMD[@]}" tee /etc/systemd/system/kleiderpfad-update.service >/dev/null <<EOF
 [Unit]
 Description=KleiderPfad: check GitHub main and rebuild Docker app when updated
 Wants=network-online.target docker.service
@@ -35,7 +37,7 @@ StandardOutput=journal
 StandardError=journal
 EOF
 
-sudo tee /etc/systemd/system/kleiderpfad-update.timer >/dev/null <<'EOF'
+"${ROOT_CMD[@]}" tee /etc/systemd/system/kleiderpfad-update.timer >/dev/null <<'EOF'
 [Unit]
 Description=KleiderPfad automatic GitHub update check every minute
 
@@ -49,10 +51,10 @@ Unit=kleiderpfad-update.service
 WantedBy=timers.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable --now kleiderpfad-update.timer
+"${ROOT_CMD[@]}" systemctl daemon-reload
+"${ROOT_CMD[@]}" systemctl enable --now kleiderpfad-update.timer
 echo "Timer installed. Running the first update check..."
-sudo systemctl start kleiderpfad-update.service
+"${ROOT_CMD[@]}" systemctl start kleiderpfad-update.service
 echo
 echo "Check status:"
 echo "  systemctl status kleiderpfad-update.timer"
