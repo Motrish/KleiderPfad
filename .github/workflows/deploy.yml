@@ -1,0 +1,71 @@
+name: Deploy via SSH (optional)
+
+on:
+  workflow_run:
+    workflows: ["Build and database tests"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kleiderpfad-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      vars.SSH_DEPLOY_ENABLED == 'true' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployment configuration and connect over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_PRIVATE_KEY DEPLOY_KNOWN_HOSTS DEPLOY_PATH; do
+            if [[ -z "${!v}" ]]; then
+              echo "::error::Missing GitHub Actions secret or variable: $v"
+              exit 1
+            fi
+          done
+          if [[ ! "$DEPLOY_PATH" =~ ^/[a-zA-Z0-9_./-]+$ ]]; then
+            echo "::error::DEPLOY_PATH must be an absolute path without spaces or quotes."
+            exit 1
+          fi
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Invalid Git revision."
+            exit 1
+          fi
+          port="${DEPLOY_PORT:-22}"
+          if [[ ! "$port" =~ ^[0-9]{1,5}$ ]]; then
+            echo "::error::Invalid DEPLOY_PORT"
+            exit 1
+          fi
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > "$HOME/.ssh/kleiderpfad_deploy"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/kleiderpfad_deploy" "$HOME/.ssh/known_hosts"
+          ssh -p "$port" -i "$HOME/.ssh/kleiderpfad_deploy" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && bash scripts/deploy-on-push.sh '$EXPECTED_SHA'"

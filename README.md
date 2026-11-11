@@ -49,6 +49,10 @@ Die Einrichtung der Authentik-Anwendung, die NPM-Erreichbarkeit und alle Umgebun
 - `/family` Haushalte, Einladungen, Kontakte
 - `/notifications` Meldungen
 
+## Automatische Updates
+
+Ein [Deploy-Skript mit systemd-Timer oder optionalem GitHub-SSH-Workflow](docs/AUTO_DEPLOY.md) hält den Server auf dem Stand von `main`. Die lokale `.env` bleibt auf dem Server, Datenbank- und Foto-Volumes bleiben bestehen.
+
 ## Qualität
 
 GitHub Actions führt `npm run typecheck`, `npm run build`, einen Schemaabgleich mit temporärem PostgreSQL und Datenbankschema-Tests aus. Der CI-Erfolg bedeutet **nicht**, dass echte Authentik-Anmeldungen und Paketübergaben mit mehreren Nutzern bereits durchgetestet sind.

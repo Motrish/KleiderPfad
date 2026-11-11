@@ -29,6 +29,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - run: bash -n scripts/deploy-on-push.sh scripts/install-auto-update.sh
       - run: npm run typecheck
       - run: npm run build
       - run: npm run db:push
