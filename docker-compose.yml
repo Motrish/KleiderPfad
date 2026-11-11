@@ -7,6 +7,9 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: "postgresql://kleiderpfad:${DB_PASSWORD}@db:5432/kleiderpfad"
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - app_uploads:/data/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -31,3 +34,4 @@ networks:
     driver: bridge
 volumes:
   postgres_data:
+  app_uploads:
