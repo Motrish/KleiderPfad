@@ -132,13 +132,13 @@ export async function createItem(form: FormData) {
   redirect("/wardrobe/"+created.id);
 }
 export async function updateItem(id: string,form:FormData) {
-  const ctx=await getContext(); uuid(id);
-  const [item]=await db.select().from(items).where(eq(items.id,id));
-  assertOwned(item,ctx.household.id);
+  const ctx=await getContext();uuid(id);
   const title=required(form,"title",100),sizeLabel=required(form,"size",25);
   const condition=value(form,"condition",25);
-  if(!["new","very_good","good","used","damaged"].includes(condition)) throw new Error("Ungültiger Zustand.");
+  if(!["new","very_good","good","used","damaged"].includes(condition))throw new Error("Ungültiger Zustand.");
   await db.transaction(async(tx)=>{
+    const [item]=await tx.select().from(items).where(eq(items.id,id)).for("update");
+    assertOwned(item,ctx.household.id);
     await tx.update(items).set({
       title,sizeLabel,condition:condition as typeof items.$inferInsert.condition,
       brand:value(form,"brand",100)||null,color:value(form,"color",70)||null,
@@ -150,13 +150,15 @@ export async function updateItem(id: string,form:FormData) {
 }
 export async function addPhoto(id:string,form:FormData) {
   const ctx=await getContext();uuid(id);
-  const [item]=await db.select().from(items).where(eq(items.id,id));
-  assertOwned(item,ctx.household.id);
   const file=form.get("photo");
-  if(!(file instanceof File) || !file.size) throw new Error("Bitte ein Foto wählen.");
+  if(!(file instanceof File)||!file.size)throw new Error("Bitte ein Foto wählen.");
   const filename=await storePhoto(file);
-  const existing=await db.select({id:itemPhotos.id}).from(itemPhotos).where(eq(itemPhotos.itemId,id)).limit(1);
-  await db.insert(itemPhotos).values({itemId:id,storageKey:filename,isPrimary:existing.length===0});
+  await db.transaction(async(tx)=>{
+    const [item]=await tx.select().from(items).where(eq(items.id,id)).for("update");
+    assertOwned(item,ctx.household.id);
+    const existing=await tx.select({id:itemPhotos.id}).from(itemPhotos).where(eq(itemPhotos.itemId,id)).limit(1);
+    await tx.insert(itemPhotos).values({itemId:id,storageKey:filename,isPrimary:existing.length===0});
+  });
   revalidatePath("/wardrobe/"+id);
 }
 export async function archiveItem(id:string) {

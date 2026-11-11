@@ -14,7 +14,7 @@ export default async function Wardrobe({searchParams}:{searchParams:Promise<{q?:
       query?ilike(items.title,"%"+query+"%"):undefined))
     .orderBy(desc(items.createdAt));
   return <AppShell household={ctx.household.name} title="Kleiderschrank">
-    <div className="actions"><Link href="/wardrobe/new" className="btn">＋ Teil erfassen</Link></div>
+    <div className="actions"><Link href="/wardrobe/new" className="btn">＋ Teil erfassen</Link><Link href="/wardrobe/history" className="btn btn-outline">⇄ Weitergabe-Verlauf</Link></div>
     <form action="/wardrobe" method="get" className="field">
       <input name="q" className="input" type="search" placeholder="Art des Kleidungsstücks suchen …" defaultValue={query}/>
     </form>

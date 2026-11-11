@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { users, households, householdMembers } from "@/db/schema";
 import { cookies } from "next/headers";
-import { eq, sql, asc } from "drizzle-orm";
+import { eq, and, sql, asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function getContext() {
@@ -11,15 +11,17 @@ export async function getContext() {
   if (!session?.oidcSubject) redirect("/");
   const issuer = process.env.AUTH_AUTHENTIK_ISSUER;
   if (!issuer) throw new Error("AUTH_AUTHENTIK_ISSUER missing");
-  const [user] = await db.insert(users).values({
-    oidcIssuer: issuer,
-    oidcSubject: session.oidcSubject,
-    displayName: session.user?.name || session.user?.email || "Benutzer",
-    email: session.user?.email ?? null,
+  const displayName = session.user?.name || session.user?.email || "Benutzer";
+  const [existingUser] = await db.select().from(users).where(
+    and(eq(users.oidcIssuer, issuer), eq(users.oidcSubject, session.oidcSubject))
+  ).limit(1);
+  const user = existingUser ?? (await db.insert(users).values({
+    oidcIssuer: issuer, oidcSubject: session.oidcSubject,
+    displayName, email: session.user?.email ?? null,
   }).onConflictDoUpdate({
-    target: [users.oidcIssuer, users.oidcSubject],
-    set: { displayName: session.user?.name || session.user?.email || "Benutzer", email: session.user?.email ?? null },
-  }).returning();
+    target: [users.oidcIssuer,users.oidcSubject],
+    set: { displayName, email: session.user?.email ?? null },
+  }).returning())[0];
 
   await db.transaction(async (tx) => {
     // Prevent duplicate default households during concurrent first login requests.
