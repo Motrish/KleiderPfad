@@ -51,6 +51,15 @@ export async function createHousehold(form: FormData) {
   await setActive(created.id);
   redirect("/family");
 }
+export async function renameHousehold(form:FormData) {
+  const ctx=await getContext();
+  checkRole(ctx.household.role);
+  const name=required(form,"name",100);
+  await db.update(households).set({name}).where(eq(households.id,ctx.household.id));
+  revalidatePath("/family");
+  revalidatePath("/");
+}
+
 export async function createInvite() {
   const ctx = await getContext();
   checkRole(ctx.household.role);

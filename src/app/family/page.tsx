@@ -3,7 +3,7 @@ import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
 import { connections, households, householdInvites, householdMembers, users } from "@/db/schema";
 import { AppShell } from "@/components/AppShell";
-import { selectHousehold, createHousehold, createInvite, joinHousehold,requestConnection,acceptConnection } from "@/actions";
+import { selectHousehold, createHousehold, createInvite, joinHousehold,requestConnection,acceptConnection,renameHousehold } from "@/actions";
 
 export default async function Family() {
   const ctx=await getContext();
@@ -24,6 +24,13 @@ export default async function Family() {
       <p><strong>{ctx.household.name}</strong> · {ctx.household.role}</p>
       <p className="help">Haushaltskennung für eine Kontaktanfrage:</p>
       <div className="code">{ctx.household.id}</div>
+      {["owner","admin"].includes(ctx.household.role)&&<details style={{marginTop:12}}>
+        <summary>Haushalt umbenennen</summary>
+        <form action={renameHousehold} className="fields">
+          <div className="field"><label>Neuer Name</label><input name="name" required maxLength={100} defaultValue={ctx.household.name}/></div>
+          <button className="btn btn-secondary">Namen speichern</button>
+        </form>
+      </details>}
       {ctx.memberships.length>1&&<form action={selectHousehold} className="fields" style={{marginTop:12}}>
         <div className="field"><label>Haushalt wechseln</label><select name="householdId" defaultValue={ctx.household.id}>
           {ctx.memberships.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
