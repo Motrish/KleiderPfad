@@ -2,58 +2,82 @@
 
 **Kleine Kleidung. Große Geschichten.**
 
-KleiderPfad ist eine selbst gehostete, mobile-first Web-App, mit der Familien Baby- und Kinderkleidung dokumentieren, verwalten, paketweise weitergeben oder verleihen und deren Geschichte nachverfolgen können.
+Mobile-First-Web-App für Baby- und Kinderkleidung: Fotografieren, erfassen, innerhalb der Familie verwalten, Pakete schnüren, verleihen oder verschenken und die Geschichte jedes Kleidungsstücks nachverfolgen.
 
-> **Status:** Technischer Projektstart / Architektur- und Datenbankgerüst. Noch keine vollständige Kleiderverwaltung und keine produktive Freigabe.
+> **Status:** Frühes MVP / Entwicklung. Die Kernfunktionen sind implementiert. Automatische TypeScript-, Build- und Datenbankschema-Prüfungen laufen über GitHub Actions. Echte OIDC-/Multiuser-End-to-End-Tests und ein vollständiger Produktionstest stehen aus.
 
-## Technologie
+## Funktionen
 
-- Next.js 16 (App Router), React, TypeScript
-- Authentik via OpenID Connect (Auth.js)
-- PostgreSQL + Drizzle ORM
-- Docker Compose mit zwei Containern: App und Datenbank
-- Bestehenden Nginx Proxy Manager verwenden (nicht Teil des Compose-Stacks)
+- **Kleiderschrank:** Fotoerfassung, Art/Größe/Zustand/Herkunft, Bearbeiten, Archivieren, Suche
+- **Private Bilder:** serverseitig skalieren, EXIF entfernen, nur berechtigt abrufbar
+- **Haushalte:** mehrere Mitglieder mit Rollen, Einladungscode, Haushalt wechseln
+- **Kontakte:** andere Haushalte über deren Kennung einladen und Anfrage bestätigen
+- **Pakete:** erstellen, Kleidungsstücke hinzufügen/entfernen, gesammelt versenden
+- **Übergaben:** Empfänger akzeptiert/ablehnt; erst Annahme verändert den Bestand
+- **Verleihen:** Eigentümer und aktueller Aufbewahrer bleiben getrennt; Rückgabe möglich
+- **Artikelhistorie:** Verlauf bleibt auch nach einer Schenkung zugänglich
+- **Benachrichtigungen:** Kontaktanfragen und Paketstatus
+- **PWA:** Manifest und App-Symbol, für mobile Browser optimiert
 
-## Schnellstart
+## Stack
 
-1. `.env.example` nach `.env` kopieren und Werte eintragen.
-2. In Authentik eine OAuth2/OpenID-Connect-Anwendung mit Confidential Client erstellen.
-3. Redirect URI: `https://<deine-domain>/api/auth/callback/authentik` festlegen.
-4. `docker compose up -d --build` ausführen.
-5. Schema einmalig vorbereiten: `docker compose exec app npm run db:push`.
-6. Nginx Proxy Manager auf Port `3100` oder auf das gemeinsame Docker-Netz routen.
+Next.js 16 · React · TypeScript · Auth.js + **bestehender Authentik** · PostgreSQL + Drizzle · Docker Compose · **bestehender Nginx Proxy Manager**.
 
-Die Bind-Adresse ist standardmäßig `127.0.0.1`. Läuft Nginx Proxy Manager auf einem anderen Host, kann `APP_BIND_IP` an eine geeignete LAN-IP gebunden werden; Zugriff per Firewall beschränken.
+**Neu benötigte Docker-Container: 2** (App und Datenbank). Authentik und NPM gehören nicht zum Stack.
 
-## Umfang des Startgerüsts
+## Installation
 
-- OIDC Login/Logout und authentifizierte Startansicht
-- Grundlayout für die mobile Navigation
-- Datenbankschema: Benutzer, Haushalte, Kleidung, Bilder, Pakete, Übergaben, Verbindungen, Ereignisverlauf
-- Health-Endpunkt `GET /api/health`
-- Dockerfile, Compose und Umgebungsvariablen
-- Architektur, Roadmap und Sicherheitsregeln unter `docs/`
+```bash
+git clone https://github.com/Motrish/KleiderPfad.git
+cd KleiderPfad
+cp .env.example .env
+# .env mit Authentik-Client-ID, Secret, Issuer, Domain und DB-Passwort bearbeiten
+docker compose up -d --build
+docker compose exec app npm run db:push
+```
 
-**Noch nicht implementiert:** Erfassung, Upload, Bearbeitung, Paketerstellung/Übergabe, Haushalts-Synchronisierung, Benutzerrechte, Einladungssystem und Benachrichtigungen. Die Datenbanktabellen und das Konzept bereiten diese Funktionen vor.
+Die Einrichtung der Authentik-Anwendung, die NPM-Erreichbarkeit und alle Umgebungsvariablen stehen in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **Niemals die echten Secrets committen.**
 
-## Entwicklungsstart
+## Mobile Navigation
+
+- `/` Übersicht
+- `/wardrobe` Kleiderschrank und Suche
+- `/wardrobe/new` erfassen
+- `/wardrobe/history` frühere Übergaben
+- `/packages` Pakete
+- `/transfers` erhalten, annehmen, zurückgeben
+- `/family` Haushalte, Einladungen, Kontakte
+- `/notifications` Meldungen
+
+## Qualität
+
+GitHub Actions führt `npm run typecheck`, `npm run build`, einen Schemaabgleich mit temporärem PostgreSQL und Datenbankschema-Tests aus. Der CI-Erfolg bedeutet **nicht**, dass echte Authentik-Anmeldungen und Paketübergaben mit mehreren Nutzern bereits durchgetestet sind.
+
+## Entwicklung
 
 ```bash
 npm install
 npm run dev
+npm run typecheck
+npm run db:generate
 ```
 
-Zum Datenbankabgleich während der Entwicklung: `npm run db:push`. Für spätere produktive Releases SQL-Migrationen mit `npm run db:generate` und `npm run db:migrate` erstellen/anwenden.
+Für lokalen Betrieb ohne Docker benötigt `DATABASE_URL` eine erreichbare PostgreSQL-Instanz. `db:push` ist für einen erstmaligen Test/Entwicklungsbetrieb gedacht; spätere Schemaänderungen sollten nachvollziehbare Migrationen verwenden.
 
-## Architekturprinzipien
+## Dokumentation
 
-- Identität liegt in Authentik; eigene Rechte gehören in KleiderPfad.
-- Ein physisches Kleidungsstück erhält genau eine unveränderliche UUID.
-- Eigentümer und aktueller Aufbewahrer werden getrennt gespeichert.
-- Paketübergaben ändern den Bestand erst bei Bestätigung und stets atomar.
-- Fotos werden außerhalb der Datenbank abgelegt; Zugriff später nur nach Rechteprüfung.
-- Keine Geheimnisse in Git committen.
+- [Deployment](docs/DEPLOYMENT.md)
+- [Architektur](docs/ARCHITECTURE.md)
+- [Datenmodell](docs/DATA_MODEL.md)
+- [Sicherheit](docs/SECURITY.md)
+- [Roadmap](docs/ROADMAP.md)
 
-Mehr: [Architektur](docs/ARCHITECTURE.md) · [Datenmodell](docs/DATA_MODEL.md) · [Roadmap](docs/ROADMAP.md) · [Deployment](docs/DEPLOYMENT.md)
+## Designentscheidungen
 
-Lizenz noch nicht festgelegt.
+- Jedes physische Kleidungsstück hat dauerhaft dieselbe ID, unabhängig von der Weitergabe.
+- Für eine Leihgabe ändern sich nur Aufbewahrer und Ereignisverlauf, nicht der Eigentümer.
+- Paketannahmen sind atomare Datenbanktransaktionen mit Zeilensperren.
+- Authentik ist ausschließlich für Identität/Login zuständig; Zugriffsrechte liegen in der App.
+- Fotos liegen auf einem eigenen persistenten Docker-Volume.
+
+Noch keine Lizenz ausgewählt.
