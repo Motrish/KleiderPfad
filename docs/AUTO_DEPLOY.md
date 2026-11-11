@@ -18,14 +18,14 @@ Ziel: Nach Änderungen an `main` soll KleiderPfad automatisch neu gebaut und neu
 Kein eingehender SSH-Zugang, keine GitHub-Secrets, kein zusätzlicher Container. Der Server prüft `main` etwa einmal pro Minute. Er baut nur bei einem noch nicht erfolgreich deployten Commit.
 
 1. Ins Repository auf dem **Docker-Host** wechseln. Die Datei `.env` muss bereits lokal vorhanden sein.
-2. Als normaler Benutzer ausführen, der Docker **ohne sudo** nutzen darf:
+2. Als Docker-Benutzer ausführen (bevorzugt ein eigener, nicht privilegierter Benutzer). Falls dein Docker-Host nur mit `root` verwaltet wird, funktioniert der Installer auch als `root`; damit erhält der Deployment-Prozess allerdings Root-Rechte.
 
 ```bash
 cd /pfad/zu/KleiderPfad
 bash scripts/install-auto-update.sh
 ```
 
-Der Installer legt `kleiderpfad-update.service` und `kleiderpfad-update.timer` unter `/etc/systemd/system/` an, aktiviert den Timer und führt einen ersten Update-Check aus.
+Der Installer legt `kleiderpfad-update.service` und `kleiderpfad-update.timer` unter `/etc/systemd/system/` an, aktiviert den Timer und führt einen ersten Update-Check aus. Der Service arbeitet unter dem Benutzer, der den Installer ausgeführt hat.
 
 Status und Logs:
 
