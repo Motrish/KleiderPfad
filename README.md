@@ -71,6 +71,8 @@ Für lokalen Betrieb ohne Docker benötigt `DATABASE_URL` eine erreichbare Postg
 - [Datenmodell](docs/DATA_MODEL.md)
 - [Sicherheit](docs/SECURITY.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Sitemap](docs/SITEMAP.md)
+- [Testplan](docs/TESTPLAN.md)
 
 ## Designentscheidungen
 
