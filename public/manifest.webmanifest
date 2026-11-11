@@ -1,0 +1,9 @@
+{
+  "name": "KleiderPfad",
+  "short_name": "KleiderPfad",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#376f48",
+  "lang": "de"
+}
