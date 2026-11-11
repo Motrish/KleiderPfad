@@ -99,6 +99,7 @@ export const connections = pgTable("connections", {
   id: uuid("id").defaultRandom().primaryKey(),
   householdAId: uuid("household_a_id").notNull().references(() => households.id),
   householdBId: uuid("household_b_id").notNull().references(() => households.id),
+  requestedByHouseholdId: uuid("requested_by_household_id").notNull().references(() => households.id),
   status: text("status", { enum: ["pending", "accepted", "blocked"] }).notNull().default("pending"),
   createdAt: now(),
 }, (t) => [uniqueIndex("connections_pair_unique").on(t.householdAId, t.householdBId)]);

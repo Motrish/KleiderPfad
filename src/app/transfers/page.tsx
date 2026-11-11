@@ -2,7 +2,7 @@ import Link from "next/link";
 import { and,desc,eq,or,inArray } from "drizzle-orm";
 import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
-import { transfers, packages, households, packageItems, items } from "@/db/schema";
+import { transfers, packages, households, packageItems, items, itemPhotos } from "@/db/schema";
 import { decideTransfer,returnLoan } from "@/actions";
 import { AppShell,EmptyState } from "@/components/AppShell";
 
@@ -15,8 +15,9 @@ export default async function Transfers() {
   const ids=[...new Set(rows.flatMap(x=>[x.transfer.toHouseholdId,x.transfer.fromHouseholdId]))];
   const names=ids.length?await db.select({id:households.id,name:households.name}).from(households).where(inArray(households.id,ids)):[];
   const nameMap=Object.fromEntries(names.map(x=>[x.id,x.name]));
-  const allItemRows=rows.length?await db.select({packageId:packageItems.packageId,title:items.title,size:items.sizeLabel})
+  const allItemRows=rows.length?await db.select({packageId:packageItems.packageId,title:items.title,size:items.sizeLabel,photoId:itemPhotos.id})
     .from(packageItems).innerJoin(items,eq(items.id,packageItems.itemId))
+    .leftJoin(itemPhotos,and(eq(itemPhotos.itemId,items.id),eq(itemPhotos.isPrimary,true)))
     .where(inArray(packageItems.packageId,rows.map(x=>x.transfer.packageId))):[];
   const labels:Record<string,string>={pending:"Wartet auf Annahme",accepted:"Angenommen",declined:"Abgelehnt",cancelled:"Abgebrochen"};
   return <AppShell household={ctx.household.name} title="Übergaben">
@@ -28,7 +29,10 @@ export default async function Transfers() {
         return <section className="card" key={t.id}>
           <div className="split"><h2>{packageTitle}</h2><span className={"pill "+(t.status==="pending"?"pill-warn":"")}>{labels[t.status]}</span></div>
           <p className="muted small">{incoming?"Von "+nameMap[t.fromHouseholdId]:"An "+nameMap[t.toHouseholdId]} · {t.type==="gift"?"Geschenk":"Leihgabe"} · {t.createdAt.toLocaleDateString("de-DE")}</p>
-          <p>{contents.map(c=>c.title+" ("+c.size+")").join(", ")}</p>
+          <div>{contents.map(c=><div className="itemrow" key={c.title+c.size+c.photoId}>
+            {c.photoId?<img className="thumb" src={"/api/photos/"+c.photoId} alt={c.title}/>:<div className="thumb" style={{display:"grid",placeItems:"center"}}>♧</div>}
+            <div className="item-info">{c.title}<br/><span className="muted small">Größe {c.size}</span></div>
+          </div>)}</div>
           {t.dueAt&&<p className="small muted">Rückgabe geplant: {t.dueAt.toLocaleDateString("de-DE")}</p>}
           {t.returnedAt&&<p className="pill">Zurückgegeben am {t.returnedAt.toLocaleDateString("de-DE")}</p>}
           {incoming&&t.status==="pending"&&<div className="actions">

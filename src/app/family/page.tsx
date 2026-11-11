@@ -55,7 +55,7 @@ export default async function Family() {
         const other=link.householdAId===ctx.household.id?link.householdBId:link.householdAId;
         return <div className="itemrow" key={link.id}><div className="item-info"><strong>{names[other]||other}</strong>
           <span className="muted small">{link.status==="accepted"?"Verbunden":"Anfrage offen"}</span></div>
-          {link.status==="pending"&&<form action={acceptConnection}>
+          {link.status==="pending" && link.requestedByHouseholdId!==ctx.household.id && ["owner","admin"].includes(ctx.household.role) && <form action={acceptConnection}>
             <input type="hidden" name="id" value={link.id}/><button className="btn btn-secondary">Bestätigen</button>
           </form>}
         </div>;

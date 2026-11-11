@@ -79,6 +79,7 @@ export async function joinHousehold(form: FormData) {
 }
 export async function requestConnection(form: FormData) {
   const ctx = await getContext();
+  checkRole(ctx.household.role);
   const targetId = uuid(required(form, "householdId"));
   if (targetId === ctx.household.id) throw new Error("Ein Haushalt kann sich nicht selbst verbinden.");
   const exists = await db.select({ id: households.id }).from(households).where(eq(households.id, targetId)).limit(1);
@@ -87,7 +88,7 @@ export async function requestConnection(form: FormData) {
   const old = await db.select().from(connections).where(and(eq(connections.householdAId,a),eq(connections.householdBId,b))).limit(1);
   if (old.length) throw new Error("Verbindung existiert bereits.");
   // A = requester even if the UUID sort order differs; the canonical pair is stored via sorted IDs.
-  await db.insert(connections).values({ householdAId:a,householdBId:b,status:"pending" });
+  await db.insert(connections).values({ householdAId:a,householdBId:b,requestedByHouseholdId:ctx.household.id,status:"pending" });
   await db.insert(notifications).values(
     (await db.select({userId:householdMembers.userId}).from(householdMembers).where(eq(householdMembers.householdId,targetId)))
       .map(x=>({userId:x.userId,title:"Neue Kontaktanfrage",body:ctx.household.name+" möchte sich verbinden."}))
@@ -96,9 +97,10 @@ export async function requestConnection(form: FormData) {
 }
 export async function acceptConnection(form: FormData) {
   const ctx = await getContext();
+  checkRole(ctx.household.role);
   const id = uuid(required(form,"id"));
   const [conn] = await db.select().from(connections).where(eq(connections.id,id));
-  if (!conn || (conn.householdAId!==ctx.household.id && conn.householdBId!==ctx.household.id)) throw new Error("Keine Berechtigung.");
+  if (!conn || conn.status !== "pending" || conn.requestedByHouseholdId === ctx.household.id || (conn.householdAId!==ctx.household.id && conn.householdBId!==ctx.household.id)) throw new Error("Keine Berechtigung.");
   await db.update(connections).set({status:"accepted"}).where(and(eq(connections.id,id),eq(connections.status,"pending")));
   revalidatePath("/family");
 }
@@ -159,8 +161,13 @@ export async function addPhoto(id:string,form:FormData) {
 }
 export async function archiveItem(id:string) {
   const ctx=await getContext();uuid(id);
-  const [item]=await db.select().from(items).where(eq(items.id,id));assertOwned(item,ctx.household.id);
   await db.transaction(async(tx)=>{
+    const [item]=await tx.select().from(items).where(eq(items.id,id)).for("update");
+    assertOwned(item,ctx.household.id);
+    const busy=await tx.select({id:transfers.id}).from(packageItems)
+      .innerJoin(transfers,eq(transfers.packageId,packageItems.packageId))
+      .where(and(eq(packageItems.itemId,id),eq(transfers.status,"pending"))).limit(1);
+    if(busy.length)throw new Error("Kleidungsstück ist bereits in einer offenen Übergabe.");
     await tx.update(items).set({archived:true}).where(eq(items.id,id));
     await tx.insert(itemEvents).values({itemId:id,eventType:"archived",actorUserId:ctx.user.id});
   });
@@ -192,9 +199,11 @@ export async function addPackageItem(packageId:string,form:FormData) {
 }
 export async function removePackageItem(packageId:string,form:FormData) {
   const ctx=await getContext();uuid(packageId);const itemId=uuid(required(form,"itemId"));
-  const [p]=await db.select().from(packages).where(eq(packages.id,packageId));
-  if(!p || p.householdId!==ctx.household.id || p.status!=="draft")throw new Error("Paket nicht bearbeitbar.");
-  await db.delete(packageItems).where(and(eq(packageItems.packageId,packageId),eq(packageItems.itemId,itemId)));
+  await db.transaction(async(tx)=>{
+    const [p]=await tx.select().from(packages).where(eq(packages.id,packageId)).for("update");
+    if(!p || p.householdId!==ctx.household.id || p.status!=="draft")throw new Error("Paket nicht bearbeitbar.");
+    await tx.delete(packageItems).where(and(eq(packageItems.packageId,packageId),eq(packageItems.itemId,itemId)));
+  });
   revalidatePath("/packages/"+packageId);
 }
 export async function sendPackage(packageId:string,form:FormData) {

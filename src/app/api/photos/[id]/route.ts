@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { db } from "@/lib/db";
 import { getContext } from "@/lib/context";
-import { itemPhotos, items } from "@/db/schema";
+import { itemPhotos, items, transfers, packageItems } from "@/db/schema";
 import { uploadDir } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
