@@ -1,9 +1,20 @@
 {
-  "name": "KleiderPfad",
+  "id": "/",
+  "name": "KleiderPfad – Kleine Kleidung. Große Geschichten.",
   "short_name": "KleiderPfad",
+  "description": "Baby- und Kinderkleidung gemeinsam verwalten, weitergeben und nachverfolgen",
   "start_url": "/",
   "display": "standalone",
+  "scope": "/",
   "background_color": "#ffffff",
-  "theme_color": "#376f48",
-  "lang": "de"
+  "theme_color": "#376b45",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

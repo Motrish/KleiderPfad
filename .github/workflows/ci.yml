@@ -1,16 +1,28 @@
-name: Build check
+name: Build and database tests
 on:
   push:
   pull_request:
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: kleiderpfad_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d kleiderpfad_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
     env:
       AUTH_AUTHENTIK_ID: placeholder
       AUTH_AUTHENTIK_SECRET: placeholder
       AUTH_AUTHENTIK_ISSUER: https://auth.example.org/application/o/kleiderpfad/
       AUTH_SECRET: testing-only-not-a-real-secret-1234567890
-      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      DATABASE_URL: postgresql://test:test@localhost:5432/kleiderpfad_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,3 +31,5 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run db:push
+      - run: node --test tests/database.test.mjs
