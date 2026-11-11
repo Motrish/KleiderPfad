@@ -15,20 +15,26 @@ export const households = pgTable("households", {
   name: text("name").notNull(),
   createdAt: now(),
 });
-
 export const householdMembers = pgTable("household_members", {
   householdId: uuid("household_id").notNull().references(() => households.id),
   userId: uuid("user_id").notNull().references(() => users.id),
   role: text("role", { enum: ["owner", "admin", "member"] }).notNull().default("member"),
   createdAt: now(),
 }, (t) => [primaryKey({ columns: [t.householdId, t.userId] })]);
+export const householdInvites = pgTable("household_invites", {
+  token: text("token").primaryKey(),
+  householdId: uuid("household_id").notNull().references(() => households.id),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: now(),
+});
 
 export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
 });
-
 export const items = pgTable("items", {
   id: uuid("id").defaultRandom().primaryKey(),
   categoryId: uuid("category_id").references(() => categories.id),
@@ -46,7 +52,6 @@ export const items = pgTable("items", {
   archived: boolean("archived").notNull().default(false),
   createdAt: now(),
 }, (t) => [index("items_owner_idx").on(t.ownerHouseholdId), index("items_holder_idx").on(t.holderHouseholdId)]);
-
 export const itemPhotos = pgTable("item_photos", {
   id: uuid("id").defaultRandom().primaryKey(),
   itemId: uuid("item_id").notNull().references(() => items.id),
@@ -64,12 +69,10 @@ export const packages = pgTable("packages", {
   status: text("status", { enum: ["draft", "submitted", "closed"] }).notNull().default("draft"),
   createdAt: now(),
 });
-
 export const packageItems = pgTable("package_items", {
   packageId: uuid("package_id").notNull().references(() => packages.id),
   itemId: uuid("item_id").notNull().references(() => items.id),
 }, (t) => [primaryKey({ columns: [t.packageId, t.itemId] })]);
-
 export const transfers = pgTable("transfers", {
   id: uuid("id").defaultRandom().primaryKey(),
   packageId: uuid("package_id").notNull().unique().references(() => packages.id),
@@ -80,9 +83,9 @@ export const transfers = pgTable("transfers", {
   status: text("status", { enum: ["pending", "accepted", "declined", "cancelled"] }).notNull().default("pending"),
   dueAt: timestamp("due_at", { withTimezone: true }),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  returnedAt: timestamp("returned_at", { withTimezone: true }),
   createdAt: now(),
 }, (t) => [index("transfers_to_idx").on(t.toHouseholdId)]);
-
 export const itemEvents = pgTable("item_events", {
   id: uuid("id").defaultRandom().primaryKey(),
   itemId: uuid("item_id").notNull().references(() => items.id),
@@ -92,7 +95,6 @@ export const itemEvents = pgTable("item_events", {
   details: text("details"),
   createdAt: now(),
 }, (t) => [index("item_events_item_idx").on(t.itemId, t.createdAt)]);
-
 export const connections = pgTable("connections", {
   id: uuid("id").defaultRandom().primaryKey(),
   householdAId: uuid("household_a_id").notNull().references(() => households.id),
@@ -100,7 +102,6 @@ export const connections = pgTable("connections", {
   status: text("status", { enum: ["pending", "accepted", "blocked"] }).notNull().default("pending"),
   createdAt: now(),
 }, (t) => [uniqueIndex("connections_pair_unique").on(t.householdAId, t.householdBId)]);
-
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id),

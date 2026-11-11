@@ -1,0 +1,21 @@
+name: Build check
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      AUTH_AUTHENTIK_ID: placeholder
+      AUTH_AUTHENTIK_SECRET: placeholder
+      AUTH_AUTHENTIK_ISSUER: https://auth.example.org/application/o/kleiderpfad/
+      AUTH_SECRET: testing-only-not-a-real-secret-1234567890
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
