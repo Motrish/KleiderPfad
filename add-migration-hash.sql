@@ -1,0 +1,1 @@
+INSERT INTO __drizzle_migrations (hash) VALUES ('0001_cultured_hydra');

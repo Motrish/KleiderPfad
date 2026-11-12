@@ -170,12 +170,12 @@ export function PhotoCapture({
             className="w-full aspect-video bg-black rounded-xl"
             aria-hidden="true"
           />
-          <div className="flex justify-center gap-3 mt-3">
-            <Button variant="secondary" onClick={stopCamera} disabled={disabled}>
+          <div className="photo-capture-actions">
+            <Button variant="secondary" onClick={stopCamera} disabled={disabled} className="wide">
               <X className="w-4 h-4" />
               Abbrechen
             </Button>
-            <Button onClick={capturePhoto} disabled={disabled}>
+            <Button onClick={capturePhoto} disabled={disabled} className="wide">
               <Camera className="w-4 h-4" />
               Auslösen
             </Button>
@@ -186,25 +186,25 @@ export function PhotoCapture({
       {hasPhoto && !isCameraOpen && (
         <div className="photo-capture-preview relative aspect-video rounded-xl overflow-hidden bg-green-light">
           {preview && <img src={preview} alt="Vorschau" className="w-full h-full object-cover" />}
-          <div className="absolute top-2 right-2 flex gap-2">
+          <div className="absolute top-3 right-3 flex gap-2">
             <button
               type="button"
               onClick={handleRetake}
               disabled={disabled}
-              className="retake-btn px-3 py-1.5 text-sm font-medium rounded-full bg-black/60 text-white backdrop-blur-sm hover:bg-black/70 transition-colors disabled:opacity-50"
+              className="retake-btn px-3 py-2 text-sm font-medium rounded-full bg-black/70 text-white backdrop-blur-sm hover:bg-black/80 transition-colors disabled:opacity-50 flex items-center gap-2 min-h-[44px]"
               aria-label="Neu aufnehmen"
             >
-              <RotateCcw className="w-4 h-4 mr-1" />
+              <RotateCcw className="w-4 h-4" />
               Neu
             </button>
             <button
               type="button"
               onClick={handleRemove}
               disabled={disabled}
-              className="retake-btn px-3 py-1.5 text-sm font-medium rounded-full bg-red-600/90 text-white backdrop-blur-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="retake-btn px-3 py-2 text-sm font-medium rounded-full bg-red-600/90 text-white backdrop-blur-sm hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2 min-h-[44px]"
               aria-label="Entfernen"
             >
-              <X className="w-4 h-4 mr-1" />
+              <X className="w-4 h-4" />
               Entfernen
             </button>
           </div>
@@ -212,22 +212,22 @@ export function PhotoCapture({
       )}
 
       {!hasPhoto && !isCameraOpen && (
-        <div className="photo-capture-placeholder aspect-video rounded-xl bg-green-light border-2 border-dashed border-green/30 flex flex-col items-center justify-center gap-3 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-green/10 flex items-center justify-center">
-            <Camera className="w-8 h-8 text-green" />
+        <div className="photo-capture-placeholder aspect-video rounded-xl bg-green-light border-2 border-dashed border-green/30 flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <div className="w-20 h-20 rounded-full bg-green/10 flex items-center justify-center">
+            <Camera className="w-10 h-10 text-green" />
           </div>
           <div>
-            <p className="font-medium text-ink">Foto hinzufügen</p>
+            <p className="font-medium text-ink text-lg">Foto hinzufügen</p>
             <p className="text-sm text-ink-muted mt-1">Kamera öffnen oder Datei wählen</p>
           </div>
-          <div className="flex gap-2 mt-2">
-            <Button variant="primary" onClick={startCamera} disabled={disabled}>
-              <Camera className="w-4 h-4" />
-              Kamera
+          <div className="flex gap-3 mt-2 flex-wrap justify-center">
+            <Button variant="primary" onClick={startCamera} disabled={disabled} className="wide sm:w-auto min-h-[52px] text-lg">
+              <Camera className="w-5 h-5" />
+              Kamera öffnen
             </Button>
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={disabled}>
-              <Image className="w-4 h-4" />
-              Datei
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={disabled} className="wide sm:w-auto min-h-[52px] text-lg">
+              <Image className="w-5 h-5" />
+              Aus Galerie
             </Button>
           </div>
           <input

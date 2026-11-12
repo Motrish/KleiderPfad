@@ -8,17 +8,18 @@ interface AppShellProps {
   household: string;
   title?: string;
   role?: string;
+  unreadNotifications?: number;
 }
 
 const navigation = [
-  { href: "/", label: "Übersicht", icon: "⌂" },
-  { href: "/wardrobe", label: "Kleidung", icon: "♧" },
-  { href: "/packages", label: "Pakete", icon: "▣" },
-  { href: "/family", label: "Familie", icon: "♙" },
+  { href: "/", label: "Übersicht", icon: "🏠" },
+  { href: "/wardrobe", label: "Kleidung", icon: "👕" },
+  { href: "/packages", label: "Pakete", icon: "📦" },
+  { href: "/family", label: "Familie", icon: "👨‍👩‍👧‍👦" },
   { href: "/notifications", label: "Benachrichtigungen", icon: "🔔" },
 ] as const;
 
-export function AppShell({ children, household, title, role }: AppShellProps) {
+export function AppShell({ children, household, title, role, unreadNotifications = 0 }: AppShellProps) {
   const pathname = usePathname();
 
   return (
@@ -27,15 +28,24 @@ export function AppShell({ children, household, title, role }: AppShellProps) {
         Zum Hauptinhalt springen
       </a>
 
-      {/* Mobile Top Bar */}
-      <header className="topbar hidden-desktop">
+      {/* Header - Single responsive header */}
+      <header className="header" role="banner">
         <Link href="/" className="brand" aria-label="KleiderPfad Startseite">
-          <span className="brand-icon" aria-hidden="true">♡</span>
+          <span className="brand-icon" aria-hidden="true">👗</span>
           KleiderPfad
         </Link>
-        <Link href="/notifications" className="round-link" aria-label="Benachrichtigungen">
-          🔔
-        </Link>
+        <div className="header-actions">
+          <Link 
+            href="/notifications" 
+            className="icon-btn" 
+            aria-label={unreadNotifications > 0 ? `${unreadNotifications} ungelesene Benachrichtigungen` : "Benachrichtigungen"}
+          >
+            🔔
+            {unreadNotifications > 0 && (
+              <span className="badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
+            )}
+          </Link>
+        </div>
       </header>
 
       {/* Desktop Sidebar */}
@@ -57,22 +67,21 @@ export function AppShell({ children, household, title, role }: AppShellProps) {
 
       {/* Main Content */}
       <div className="main">
-        {/* Desktop Top Bar */}
-        <header className="topbar hidden-mobile">
-          <Link href="/" className="brand" aria-label="KleiderPfad Startseite">
-            <span className="brand-icon" aria-hidden="true">♡</span>
-            KleiderPfad
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-            <Link href="/notifications" className="round-link" aria-label="Benachrichtigungen">
-              🔔
-            </Link>
-          </div>
-        </header>
-
         <div className="eyebrow">
           {household}
-          {role && <span style={{ marginLeft: "var(--space-2)", padding: "2px 8px", background: "var(--green-light)", color: "var(--green)", borderRadius: "var(--radius-full)", fontSize: "var(--text-xs)", fontWeight: 600 }}>{role}</span>}
+          {role && (
+            <span style={{ 
+              marginLeft: "var(--space-2)", 
+              padding: "2px 8px", 
+              background: "var(--green-light)", 
+              color: "var(--green)", 
+              borderRadius: "var(--radius-full)", 
+              fontSize: "var(--text-xs)", 
+              fontWeight: 600 
+            }}>
+              {role}
+            </span>
+          )}
         </div>
 
         {title && <h1 id="main-content">{title}</h1>}
@@ -81,7 +90,7 @@ export function AppShell({ children, household, title, role }: AppShellProps) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="nav" aria-label="Hauptnavigation">
+      <nav className="bottom-nav" aria-label="Hauptnavigation">
         {navigation.map((item) => (
           <Link
             key={item.href}
@@ -102,7 +111,7 @@ export function EmptyState({ text, href, action }: { text: string; href?: string
   return (
     <div className="empty">
       <p>{text}</p>
-      {href && <a className="btn" href={href}>{action ?? "Weiter"}</a>}
+      {href && <a className="btn wide" href={href}>{action ?? "Weiter"}</a>}
     </div>
   );
 }
