@@ -9,6 +9,7 @@ import {
   Users,
   Bell,
   ChevronLeft,
+  Plus,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -133,23 +134,48 @@ export function AppShell({
         <div className="content">{children}</div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - 5 items with centered Plus */}
       <nav className="bottom-nav" aria-label="Hauptnavigation">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={isActive ? "active" : ""}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <Icon size={24} aria-hidden="true" />
-              {item.label}
-            </Link>
-          );
-        })}
+        <Link
+          href="/"
+          className={pathname === "/" ? "active" : ""}
+          aria-current={pathname === "/" ? "page" : undefined}
+        >
+          <Home size={24} aria-hidden="true" />
+          <span>Übersicht</span>
+        </Link>
+        <Link
+          href="/wardrobe"
+          className={pathname === "/wardrobe" || pathname.startsWith("/wardrobe/") ? "active" : ""}
+          aria-current={pathname === "/wardrobe" || pathname.startsWith("/wardrobe/") ? "page" : undefined}
+        >
+          <Shirt size={24} aria-hidden="true" />
+          <span>Kleidung</span>
+        </Link>
+        {/* Centered Plus Button */}
+        <Link
+          href="/wardrobe/new"
+          className="center-action"
+          aria-label="Kleidungsstück erfassen"
+        >
+          <Plus size={28} aria-hidden="true" />
+        </Link>
+        <Link
+          href="/packages"
+          className={pathname === "/packages" || pathname.startsWith("/packages/") ? "active" : ""}
+          aria-current={pathname === "/packages" || pathname.startsWith("/packages/") ? "page" : undefined}
+        >
+          <Package size={24} aria-hidden="true" />
+          <span>Pakete</span>
+        </Link>
+        <Link
+          href="/family"
+          className={pathname === "/family" || pathname.startsWith("/family/") ? "active" : ""}
+          aria-current={pathname === "/family" || pathname.startsWith("/family/") ? "page" : undefined}
+        >
+          <Users size={24} aria-hidden="true" />
+          <span>Familie</span>
+        </Link>
       </nav>
     </main>
   );
