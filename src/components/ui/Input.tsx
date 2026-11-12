@@ -4,7 +4,7 @@ import { InputHTMLAttributes, forwardRef, TextareaHTMLAttributes, SelectHTMLAttr
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: string | undefined;
   hint?: string;
   fullWidth?: boolean;
 }
@@ -47,7 +47,7 @@ Input.displayName = "Input";
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
-  error?: string;
+  error?: string | undefined;
   hint?: string;
   fullWidth?: boolean;
 }

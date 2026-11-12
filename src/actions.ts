@@ -321,3 +321,63 @@ export async function markNotificationRead(form:FormData) {
   await db.update(notifications).set({isRead:true}).where(and(eq(notifications.id,id),eq(notifications.userId,ctx.user.id)));
   revalidatePath("/notifications");
 }
+
+export async function createPackageFromSelection(data: { title: string; notes?: string; itemIds: string[] }) {
+  const ctx = await getContext();
+  const { title, notes, itemIds } = data;
+
+  if (!title || !title.trim()) throw new Error("Paketname fehlt");
+  if (!itemIds.length) throw new Error("Keine Kleidungsstücke ausgewählt");
+  if (itemIds.length > 100) throw new Error("Zu viele Kleidungsstücke (max. 100)");
+
+  // Validate UUIDs and deduplicate
+  const uniqueIds = [...new Set(itemIds)];
+  for (const id of uniqueIds) {
+    if (!/^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i.test(id)) {
+      throw new Error("Ungültige Kleidungsstück-ID");
+    }
+  }
+
+  const pkg = await db.transaction(async (tx) => {
+    // Lock and validate all items
+    const locked = await tx.select().from(items).where(inArray(items.id, uniqueIds)).orderBy(items.id).for("update");
+    
+    if (locked.length !== uniqueIds.length) {
+      throw new Error("Ein oder mehrere Kleidungsstücke nicht gefunden");
+    }
+
+    // Validate ownership and availability
+    for (const item of locked) {
+      if (item.ownerHouseholdId !== ctx.household.id || item.holderHouseholdId !== ctx.household.id || item.archived) {
+        throw new Error(`"${item.title}" ist nicht im eigenen Bestand verfügbar`);
+      }
+    }
+
+    // Check for pending transfers
+    const busy = await tx.select({ id: transfers.id }).from(packageItems)
+      .innerJoin(transfers, eq(transfers.packageId, packageItems.packageId))
+      .where(and(inArray(packageItems.itemId, uniqueIds), eq(transfers.status, "pending")))
+      .limit(1);
+    if (busy.length) throw new Error("Ein Teil befindet sich bereits in einer offenen Übergabe");
+
+    // Create package
+    const [pkg] = await tx.insert(packages).values({
+      householdId: ctx.household.id,
+      createdByUserId: ctx.user.id,
+      title: title.trim(),
+      notes: notes?.trim() || null,
+      status: "draft",
+    }).returning();
+
+    // Add all items to package
+    await tx.insert(packageItems).values(
+      uniqueIds.map((itemId) => ({ packageId: pkg.id, itemId }))
+    ).onConflictDoNothing();
+
+    return pkg;
+  });
+
+  revalidatePath("/packages");
+  revalidatePath("/wardrobe");
+  return pkg.id;
+}
