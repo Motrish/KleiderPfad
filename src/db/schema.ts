@@ -27,6 +27,7 @@ export const householdInvites = pgTable("household_invites", {
   createdByUserId: uuid("created_by_user_id").notNull().references(() => users.id),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   usedAt: timestamp("used_at", { withTimezone: true }),
+  inviteSlug: text("invite_slug").unique(),
   createdAt: now(),
 });
 
