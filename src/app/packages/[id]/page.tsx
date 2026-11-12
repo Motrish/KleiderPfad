@@ -1,62 +1,222 @@
 import Link from "next/link";
-import { and,eq,or, inArray, notInArray } from "drizzle-orm";
+import { and, eq, or, inArray, notInArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getContext } from "@/lib/context";
 import { packages, packageItems, items, connections, households, itemPhotos } from "@/db/schema";
 import { addPackageItem, removePackageItem, sendPackage } from "@/actions";
 import { AppShell } from "@/components/AppShell";
+import { Plus, Trash2, Send, ChevronLeft, Package, UserPlus } from "lucide-react";
 
-export default async function PackageDetails({params}:{params:Promise<{id:string}>}) {
-  const ctx=await getContext(),{id}=await params;
-  if(!/^[\da-f-]{36}$/i.test(id))notFound();
-  const [p]=await db.select().from(packages).where(and(eq(packages.id,id),eq(packages.householdId,ctx.household.id)));
-  if(!p)notFound();
-  const chosen=await db.select({item:items,photoId:itemPhotos.id}).from(packageItems)
-    .innerJoin(items,eq(items.id,packageItems.itemId))
-    .leftJoin(itemPhotos,and(eq(itemPhotos.itemId,items.id),eq(itemPhotos.isPrimary,true)))
-    .where(eq(packageItems.packageId,id));
-  const selectedIds=chosen.map(x=>x.item.id);
-  const available=p.status==="draft"?await db.select({id:items.id,title:items.title,size:items.sizeLabel}).from(items)
-    .where(and(eq(items.ownerHouseholdId,ctx.household.id),eq(items.holderHouseholdId,ctx.household.id),
-      eq(items.archived,false),selectedIds.length?notInArray(items.id,selectedIds):undefined)):[];
-  const links=await db.select().from(connections).where(and(eq(connections.status,"accepted"),
-    or(eq(connections.householdAId,ctx.household.id),eq(connections.householdBId,ctx.household.id))));
-  const targetIds=links.map(x=>x.householdAId===ctx.household.id?x.householdBId:x.householdAId);
-  const recipients=targetIds.length?await db.select().from(households).where(inArray(households.id,targetIds)):[];
-  return <AppShell household={ctx.household.name} title={p.title}>
-    <p className="muted">{p.notes||"Paketinhalt auswählen und anschließend gemeinsam übertragen."}</p>
-    <span className="pill">{p.status==="draft"?"Entwurf":p.status==="submitted"?"Versendet":"Abgeschlossen"} · {chosen.length} Teile</span>
-    <h2 style={{marginTop:24}}>Kleidungsstücke</h2>
-    <section className="card">
-      {!chosen.length?<p className="muted">Dieses Paket ist noch leer.</p>:chosen.map(({item,photoId})=><div className="itemrow" key={item.id}>
-        {photoId?<img className="thumb" src={"/api/photos/"+photoId} alt={item.title}/>:<div className="thumb" style={{display:"grid",placeItems:"center"}}>♧</div>}
-        <div className="item-info"><Link href={"/wardrobe/"+item.id}><strong>{item.title}</strong></Link><span className="muted small">Größe {item.sizeLabel}</span></div>
-        {p.status==="draft"&&<form action={removePackageItem.bind(null,id)}>
-          <input type="hidden" name="itemId" value={item.id}/><button className="btn btn-outline" aria-label={item.title+" entfernen"}>−</button>
-        </form>}
-      </div>)}
-    </section>
-    {p.status==="draft"&&<>
-      <section className="card"><h2>Teil hinzufügen</h2>
-        {available.length?<form action={addPackageItem.bind(null,id)} className="fields">
-          <div className="field"><label>Aus dem Kleiderschrank wählen</label><select name="itemId" required>
-            {available.map(item=><option key={item.id} value={item.id}>{item.title} – Größe {item.size}</option>)}
-          </select></div><button className="btn btn-secondary">＋ Hinzufügen</button></form>
-          :<p className="muted">Keine weiteren Teile verfügbar. <Link href="/wardrobe/new">Neues Teil erfassen</Link></p>}
+export default async function PackageDetails({ params }: { params: Promise<{ id: string }> }) {
+  const ctx = await getContext();
+  const { id } = await params;
+  
+  if (!/^[\da-f-]{36}$/i.test(id)) notFound();
+  
+  const [p] = await db.select().from(packages).where(and(eq(packages.id, id), eq(packages.householdId, ctx.household.id)));
+  if (!p) notFound();
+  
+  const chosen = await db.select({ item: items, photoId: itemPhotos.id })
+    .from(packageItems)
+    .innerJoin(items, eq(items.id, packageItems.itemId))
+    .leftJoin(itemPhotos, and(eq(itemPhotos.itemId, items.id), eq(itemPhotos.isPrimary, true)))
+    .where(eq(packageItems.packageId, id));
+  
+  const selectedIds = chosen.map(x => x.item.id);
+  
+  const available = p.status === "draft" ? await db.select({ id: items.id, title: items.title, size: items.sizeLabel })
+    .from(items)
+    .where(and(
+      eq(items.ownerHouseholdId, ctx.household.id),
+      eq(items.holderHouseholdId, ctx.household.id),
+      eq(items.archived, false),
+      selectedIds.length ? notInArray(items.id, selectedIds) : undefined
+    )) : [];
+  
+  const links = await db.select().from(connections).where(and(
+    eq(connections.status, "accepted"),
+    or(eq(connections.householdAId, ctx.household.id), eq(connections.householdBId, ctx.household.id))
+  ));
+  
+  const targetIds = links.map(x => x.householdAId === ctx.household.id ? x.householdBId : x.householdAId);
+  const recipients = targetIds.length ? await db.select().from(households).where(inArray(households.id, targetIds)) : [];
+
+  const statusColors: Record<string, "pill-success" | "pill-warn" | "pill-neutral"> = { draft: "pill-neutral", submitted: "pill-warn", closed: "pill-success" };
+  const statuses: Record<string, string> = { draft: "Entwurf", submitted: "Wartet auf Annahme", closed: "Abgeschlossen" };
+
+  const renderChosenItems = () => {
+    if (chosen.length === 0) {
+      return (
+        <div className="empty" style={{ margin: "var(--space-4)" }}>
+          <p>Dieses Paket ist noch leer.</p>
+          {p.status === "draft" && (
+            <Link href={`/packages/${id}`} className="btn" style={{ marginTop: "var(--space-3)" }}>
+              <Plus size={18} />
+              Teil hinzufügen
+            </Link>
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div style={{ padding: "0 var(--space-4)" }}>
+        {chosen.map(({ item, photoId }) => (
+          <Link key={item.id} href={`/wardrobe/${item.id}`} className="card" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-3)", padding: "var(--space-3)" }}>
+            {photoId ? (
+              <img src={`/api/photos/${photoId}`} alt={item.title} className="thumb" />
+            ) : (
+              <div className="thumb" style={{ display: "grid", placeItems: "center", fontSize: "24px" }}>👕</div>
+            )}
+            <div className="item-info" style={{ flex: 1 }}>
+              <strong>{item.title}</strong>
+              <div className="meta">Größe {item.sizeLabel}</div>
+            </div>
+            {p.status === "draft" && (
+              <form action={removePackageItem.bind(null, id)} style={{ display: "inline" }}>
+                <input type="hidden" name="itemId" value={item.id} />
+                <button type="submit" className="icon-btn" aria-label={`${item.title} entfernen`}>
+                  <Trash2 size={18} color="#E76F6F" />
+                </button>
+              </form>
+            )}
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
+  const renderAddItemsSection = () => {
+    if (!available.length) {
+      return (
+        <div className="empty" style={{ margin: "var(--space-4) 0" }}>
+          <p>Keine weiteren Teile verfügbar.</p>
+          <Link href="/wardrobe/new" className="btn" style={{ marginTop: "var(--space-3)" }}>
+            <Plus size={18} />
+            Neues Teil erfassen
+          </Link>
+        </div>
+      );
+    }
+    
+    return (
+      <form action={addPackageItem.bind(null, id)} className="fields">
+        <div className="field">
+          <label>Aus dem Kleiderschrank wählen</label>
+          <select name="itemId" required style={{ minHeight: "var(--touch-comfortable)" }}>
+            {available.map(item => (
+              <option key={item.id} value={item.id}>
+                {item.title} – Größe {item.size}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className="btn wide" style={{ marginTop: "var(--space-2)" }}>
+          <Plus size={18} />
+          Hinzufügen
+        </button>
+      </form>
+    );
+  };
+
+  return (
+    <AppShell household={ctx.household.name} title={p.title}>
+      {/* Package Header */}
+      <section className="card" style={{ margin: "var(--space-4)", padding: "var(--space-5)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
+          <div>
+            <h2 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: "0 0 var(--space-1)" }}>{p.title}</h2>
+            <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", margin: 0 }}>
+              Erstellt am {p.createdAt.toLocaleDateString("de-DE")}
+            </p>
+          </div>
+          <span className={`pill ${p.status === "draft" ? "pill-neutral" : p.status === "submitted" ? "pill-warn" : "pill-success"}`}>
+            {statuses[p.status]}
+          </span>
+        </div>
+        
+        {p.notes && (
+          <p style={{ color: "var(--text-secondary)", marginBottom: "var(--space-4)" }}>{p.notes}</p>
+        )}
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+            {chosen.length} Teil{chosen.length !== 1 ? "e" : ""} im Paket
+          </span>
+        </div>
       </section>
-      <section className="card card-soft"><h2>Paket übergeben</h2>
-        {recipients.length===0?<p>Verbinde dich unter <Link href="/family"><strong>Familie &amp; Kontakte</strong></Link> mit einem anderen Haushalt, bevor du Pakete übergibst.</p>:
-          <form action={sendPackage.bind(null,id)} className="fields">
-            <div className="field"><label>Empfänger</label><select name="recipient" required>{recipients.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
-            <div className="field"><label>Art der Übergabe</label><select name="type" defaultValue="gift">
-              <option value="gift">Verschenken</option><option value="loan">Verleihen</option></select></div>
-            <div className="field"><label>Optionales Rückgabedatum (bei Leihgabe)</label><input type="date" name="dueAt"/></div>
-            <p className="help">Der neue Besitzer wird erst nach der Bestätigung eingetragen.</p>
-            <button className="btn wide" disabled={!chosen.length}>Paket zur Bestätigung senden →</button>
-          </form>}
+
+      {/* Items in Package */}
+      <section style={{ padding: "0 var(--space-4) var(--space-4)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-3)" }}>
+          <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 600, margin: 0 }}>Kleidungsstücke ({chosen.length})</h3>
+        </div>
+        
+        {renderChosenItems()}
       </section>
-    </>}
-    <Link href="/packages" className="btn btn-outline">← Zur Paketübersicht</Link>
-  </AppShell>;
+
+      {/* Add Items Section */}
+      {p.status === "draft" && (
+        <section className="card" style={{ margin: "var(--space-4)" }}>
+          <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 600, marginBottom: "var(--space-4)" }}>Teil hinzufügen</h3>
+          {renderAddItemsSection()}
+        </section>
+      )}
+
+      {/* Send Package Section */}
+      {p.status === "draft" && (
+        <section className="card-soft" style={{ margin: "var(--space-4)", padding: "var(--space-5)" }}>
+          <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 600, marginBottom: "var(--space-4)" }}>
+            <Package size={20} color="#27AE70" style={{ marginRight: "var(--space-2)", verticalAlign: "middle" }} />
+            Paket übergeben
+          </h3>
+          
+          {recipients.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "var(--space-6)" }}>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "var(--space-4)" }}>
+                Verbinde dich zuerst mit einem anderen Haushalt unter 
+                <Link href="/family" style={{ color: "var(--primary)", fontWeight: 600 }}>Familie & Kontakte</Link>, 
+                bevor du Pakete übergibst.
+              </p>
+              <Link href="/family" className="btn btn-outline">
+                <UserPlus size={18} />
+                Zu Familie & Kontakte
+              </Link>
+            </div>
+          ) : (
+            <form action={sendPackage.bind(null, id)} className="fields">
+              <div className="field">
+                <label>Empfänger</label>
+                <select name="recipient" required>
+                  {recipients.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Art der Übergabe</label>
+                <select name="type" defaultValue="gift">
+                  <option value="gift">Verschenken</option>
+                  <option value="loan">Verleihen</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Optionales Rückgabedatum (bei Leihgabe)</label>
+                <input type="date" name="dueAt" />
+              </div>
+              <p className="help">Der neue Besitzer wird erst nach der Bestätigung eingetragen.</p>
+              <button className="btn wide" disabled={!chosen.length} style={{ marginTop: "var(--space-2)" }}>
+                <Send size={18} />
+                Paket zur Bestätigung senden
+              </button>
+            </form>
+          )}
+        </section>
+      )}
+
+      <Link href="/packages" className="btn btn-outline wide" style={{ margin: "0 var(--space-4) var(--space-8)" }}>
+        <ChevronLeft size={18} />
+        Zur Paketübersicht
+      </Link>
+    </AppShell>
+  );
 }

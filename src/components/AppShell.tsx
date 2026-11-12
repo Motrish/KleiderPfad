@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Home,
+  Shirt,
+  Package,
+  Users,
+  Bell,
+  ChevronLeft,
+} from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -9,18 +17,29 @@ interface AppShellProps {
   title?: string;
   role?: string;
   unreadNotifications?: number;
+  showBackButton?: boolean;
+  backHref?: string;
 }
 
 const navigation = [
-  { href: "/", label: "Übersicht", icon: "🏠" },
-  { href: "/wardrobe", label: "Kleidung", icon: "👕" },
-  { href: "/packages", label: "Pakete", icon: "📦" },
-  { href: "/family", label: "Familie", icon: "👨‍👩‍👧‍👦" },
-  { href: "/notifications", label: "Benachrichtigungen", icon: "🔔" },
+  { href: "/", label: "Übersicht", icon: Home },
+  { href: "/wardrobe", label: "Kleidung", icon: Shirt },
+  { href: "/packages", label: "Pakete", icon: Package },
+  { href: "/family", label: "Familie", icon: Users },
+  { href: "/notifications", label: "Benachrichtigungen", icon: Bell },
 ] as const;
 
-export function AppShell({ children, household, title, role, unreadNotifications = 0 }: AppShellProps) {
+export function AppShell({ 
+  children, 
+  household, 
+  title, 
+  role, 
+  unreadNotifications = 0,
+  showBackButton = false,
+  backHref = "/"
+}: AppShellProps) {
   const pathname = usePathname();
+  const isSubPage = pathname !== "/" && pathname !== "/wardrobe" && pathname !== "/packages" && pathname !== "/family" && pathname !== "/notifications";
 
   return (
     <main className="shell">
@@ -28,19 +47,32 @@ export function AppShell({ children, household, title, role, unreadNotifications
         Zum Hauptinhalt springen
       </a>
 
-      {/* Header - Single responsive header */}
+      {/* Header */}
       <header className="header" role="banner">
-        <Link href="/" className="brand" aria-label="KleiderPfad Startseite">
-          <span className="brand-icon" aria-hidden="true">👗</span>
-          KleiderPfad
-        </Link>
+        {showBackButton && (
+          <Link 
+            href={backHref} 
+            className="icon-btn" 
+            aria-label="Zurück"
+          >
+            <ChevronLeft size={22} />
+          </Link>
+        )}
+        {!showBackButton && (
+          <Link href="/" className="brand" aria-label="KleiderPfad Startseite">
+            <span className="brand-icon" aria-hidden="true">
+              <Shirt size={24} color="white" />
+            </span>
+            KleiderPfad
+          </Link>
+        )}
         <div className="header-actions">
           <Link 
             href="/notifications" 
             className="icon-btn" 
             aria-label={unreadNotifications > 0 ? `${unreadNotifications} ungelesene Benachrichtigungen` : "Benachrichtigungen"}
           >
-            🔔
+            <Bell size={22} />
             {unreadNotifications > 0 && (
               <span className="badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
             )}
@@ -51,57 +83,73 @@ export function AppShell({ children, household, title, role, unreadNotifications
       {/* Desktop Sidebar */}
       <aside className="sidebar" aria-label="Hauptnavigation">
         <nav className="sidebar-nav">
-          {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)) ? "active" : ""}
-              aria-current={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)) ? "page" : undefined}
-            >
-              <span aria-hidden="true">{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={isActive ? "active" : ""}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon size={22} aria-hidden="true" />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 
       {/* Main Content */}
       <div className="main">
-        <div className="eyebrow">
-          {household}
-          {role && (
-            <span style={{ 
-              marginLeft: "var(--space-2)", 
-              padding: "2px 8px", 
-              background: "var(--green-light)", 
-              color: "var(--green)", 
-              borderRadius: "var(--radius-full)", 
-              fontSize: "var(--text-xs)", 
-              fontWeight: 600 
-            }}>
-              {role}
-            </span>
-          )}
-        </div>
+        {isSubPage && showBackButton && title && (
+          <div className="page-header" style={{ marginBottom: "var(--space-4)" }}>
+            <Link href={backHref} className="icon-btn" aria-label="Zurück">
+              <ChevronLeft size={22} />
+            </Link>
+            <div style={{ flex: 1 }}>
+              <h1 className="page-title">{title}</h1>
+              {household && <p className="page-subtitle">{household}</p>}
+            </div>
+          </div>
+        )}
 
-        {title && <h1 id="main-content">{title}</h1>}
+        {!isSubPage && (
+          <div className="eyebrow">
+            {household}
+            {role && (
+              <span className="pill pill-success" style={{ marginLeft: "var(--space-2)" }}>
+                {role}
+              </span>
+            )}
+          </div>
+        )}
+
+        {isSubPage && !showBackButton && title && (
+          <h1 id="main-content" className="page-title" style={{ marginBottom: "var(--space-4)" }}>{title}</h1>
+        )}
 
         <div className="content">{children}</div>
       </div>
 
       {/* Mobile Bottom Navigation */}
       <nav className="bottom-nav" aria-label="Hauptnavigation">
-        {navigation.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)) ? "active" : ""}
-            aria-current={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)) ? "page" : undefined}
-          >
-            <span aria-hidden="true">{item.icon}</span>
-            {item.label}
-          </Link>
-        ))}
+        {navigation.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={isActive ? "active" : ""}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon size={24} aria-hidden="true" />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </main>
   );

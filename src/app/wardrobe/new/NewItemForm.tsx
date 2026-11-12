@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import Link from "next/link";
+import { useState, FormEvent, useRef } from "react";
 import { createItem } from "@/actions";
-import { PhotoCapture } from "@/components/ui/PhotoCapture";
-import { Button } from "@/components/ui/Button";
+import { Camera, Image, X, RotateCcw, Check } from "lucide-react";
 
 const categories = [
   "Body", "Strampler", "Hose", "Shirt", "Pullover", "Jacke",
@@ -33,6 +31,9 @@ interface NewItemFormProps {
 export function NewItemForm({ householdName }: NewItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateField = (name: string, value: string) => {
     switch (name) {
@@ -64,10 +65,42 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
+  const handlePhotoCapture = (file: File) => {
+    setPhotoFile(file);
+    const url = URL.createObjectURL(file);
+    setPhotoPreview(url);
+    setErrors(prev => ({ ...prev, photo: "" }));
+  };
+
+  const handlePhotoRemove = () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    // Clear the hidden file input
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Datei zu groß. Maximum 10 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    if (!["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(file.type)) {
+      alert("Nicht unterstütztes Dateiformat. Erlaubt: JPEG, PNG, WebP, HEIC.");
+      e.target.value = "";
+      return;
+    }
+
+    handlePhotoCapture(file);
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validate all required fields
     const formData = new FormData(e.currentTarget);
     const newErrors: Record<string, string> = {};
     
@@ -83,12 +116,15 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
       return;
     }
 
+    if (photoFile) {
+      formData.set("photo", photoFile);
+    }
+
     setIsSubmitting(true);
     setErrors({});
 
     try {
       await createItem(formData);
-      // Redirect handled by server action
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Fehler beim Speichern" });
       setIsSubmitting(false);
@@ -101,20 +137,53 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
       <section className="card-soft" style={{ padding: "var(--space-5)" }}>
         <label className="field" style={{ gap: "var(--space-3)" }}>
           <span>Foto</span>
-          <PhotoCapture 
-            name="photo" 
-            onCapture={(file) => {}}
-            disabled={isSubmitting}
-          />
+          {photoPreview ? (
+            <div className="photo-capture-preview" style={{ width: "100%", maxWidth: "300px" }}>
+              <img src={photoPreview} alt="Vorschau" style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", borderRadius: "var(--radius-card-lg)" }} />
+              <div className="actions" style={{ position: "absolute", top: "var(--space-3)", right: "var(--space-3)" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhotoFile(null);
+                    setPhotoPreview(null);
+                  }}
+                  className="icon-btn-sm"
+                  aria-label="Entfernen"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="photo-capture-placeholder" style={{ cursor: "pointer" }} onClick={() => document.getElementById("photo-input")?.click()}>
+              <div className="icon">
+                <Camera size={32} color="#27AE70" />
+              </div>
+              <div className="text">Foto aufnehmen</div>
+              <div className="hint">oder antippen für Galerie</div>
+              <input
+                id="photo-input"
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="photo-capture-input"
+                aria-label="Foto auswählen"
+                disabled={isSubmitting}
+                style={{ display: "none" }}
+              />
+            </div>
+          )}
         </label>
-        <p className="help" style={{ marginTop: "var(--space-2)", textAlign: "center" }}>
+        <p className="hint" style={{ marginTop: "var(--space-2)", textAlign: "center" }}>
           Foto aufnehmen oder aus Galerie wählen
         </p>
       </section>
 
       {/* Required Fields */}
       <section className="card">
-        <h2 style={{ marginBottom: "var(--space-4)", fontSize: "var(--text-lg)" }}>Angaben</h2>
+        <h2 style={{ marginBottom: "var(--space-4)", fontSize: "var(--text-lg)", fontWeight: 600 }}>Angaben</h2>
         
         <div className="field">
           <label htmlFor="title">Art des Kleidungsstücks *</label>
@@ -200,10 +269,12 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
 
       {/* Optional Fields - Collapsible */}
       <details className="card">
-        <summary style={{ cursor: "pointer", fontWeight: 600, padding: "var(--space-2) 0" }}>
-          Weitere Angaben (optional)
+        <summary style={{ cursor: "pointer", fontWeight: 600, padding: "var(--space-2) 0", listStyle: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <span>Weitere Angaben (optional)</span>
+          </div>
         </summary>
-        <div className="fields" style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--line)" }}>
+        <div className="fields" style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--divider)" }}>
           <div className="field">
             <label htmlFor="brand">Marke</label>
             <input id="brand" name="brand" maxLength={100} disabled={isSubmitting} />
@@ -221,18 +292,18 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
 
       {/* Form Errors */}
       {errors.form && (
-        <div className="notice" style={{ background: "var(--danger-bg)", color: "var(--danger)", borderColor: "var(--danger)" }}>
+        <div className="notice" style={{ background: "var(--error-bg)", color: "var(--error)", borderColor: "var(--error)" }}>
           {errors.form}
         </div>
       )}
 
       {/* Actions */}
       <div className="actions" style={{ marginTop: "var(--space-6)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-        <Button 
+        <button 
           type="submit" 
-          className="wide" 
+          className="btn wide" 
           disabled={isSubmitting}
-          style={{ minHeight: "var(--touch-large)", fontSize: "var(--text-lg)" }}
+          style={{ minHeight: "var(--touch-xl)", fontSize: "var(--text-lg)" }}
         >
           {isSubmitting ? (
             <>
@@ -251,9 +322,9 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
           ) : (
             "✓ Kleidungsstück speichern"
           )}
-        </Button>
-        <Link 
-          href="/wardrobe" 
+        </button>
+        <button 
+          type="button"
           className="btn btn-outline wide" 
           style={{ 
             pointerEvents: isSubmitting ? "none" : "auto", 
@@ -261,9 +332,10 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
             minHeight: "var(--touch-comfortable)",
             fontSize: "var(--text-base)"
           }}
+          onClick={() => window.history.back()}
         >
           Abbrechen
-        </Link>
+        </button>
       </div>
 
       <style jsx>{`
