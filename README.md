@@ -77,6 +77,7 @@ Für lokalen Betrieb ohne Docker benötigt `DATABASE_URL` eine erreichbare Postg
 - [Roadmap](docs/ROADMAP.md)
 - [Sitemap](docs/SITEMAP.md)
 - [Testplan](docs/TESTPLAN.md)
+- [Knuspr-inspirierter Design-/UX-Implementierungsleitfaden](docs/DESIGN_IMPLEMENTATION_KNUSPR.md)
 
 ## Designentscheidungen
 
