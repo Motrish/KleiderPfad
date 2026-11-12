@@ -7,6 +7,7 @@ import { AppShell, EmptyState } from "@/components/AppShell";
 import { Plus, Search, Filter, X } from "lucide-react";
 import { WardrobeFilters } from "@/components/wardrobe/WardrobeFilters";
 import { ProductCard } from "@/components/wardrobe/ProductCard";
+import { PackageBasketProvider, BasketActionBar } from "@/components/packages";
 
 type Filters = { q?: string; category?: string; size?: string; condition?: string; status?: string };
 
@@ -57,53 +58,58 @@ export default async function Wardrobe({ searchParams }: { searchParams: Promise
     .orderBy(desc(items.createdAt));
 
   return (
-    <AppShell household={ctx.household.name} title="Meine Kleidung">
-      {/* Page Header */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Meine Kleidung</h1>
-          <p className="page-subtitle">Entdecke und verwalte deine Kleidungsstücke</p>
+    <PackageBasketProvider householdId={holder}>
+      <AppShell household={ctx.household.name} title="Meine Kleidung">
+        {/* Page Header */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Meine Kleidung</h1>
+            <p className="page-subtitle">Entdecke und verwalte deine Kleidungsstücke</p>
+          </div>
+          <Link href="/wardrobe/new" className="btn" style={{ marginLeft: "auto" }}>
+            <Plus size={20} />
+            Hinzufügen
+          </Link>
         </div>
-        <Link href="/wardrobe/new" className="btn" style={{ marginLeft: "auto" }}>
-          <Plus size={20} />
-          Hinzufügen
-        </Link>
-      </div>
 
-      {/* Filters */}
-      <WardrobeFilters searchParams={Promise.resolve(params as any)} />
+        {/* Filters */}
+        <WardrobeFilters searchParams={Promise.resolve(params as any)} />
 
-      {/* Results */}
-      <p className="text-muted text-sm" style={{ marginBottom: "var(--space-3)", padding: "0 var(--space-4)" }}>
-        {found.length} Kleidungsstück{found.length !== 1 ? "e" : ""} gefunden
-      </p>
+        {/* Results */}
+        <p className="text-muted text-sm" style={{ marginBottom: "var(--space-3)", padding: "0 var(--space-4)" }}>
+          {found.length} Kleidungsstück{found.length !== 1 ? "e" : ""} gefunden
+        </p>
 
-      {found.length === 0 ? (
-        <EmptyState 
-          text="Noch keine Kleidung vorhanden" 
-          href="/wardrobe/new" 
-          action="Erstes Kleidungsstück hinzufügen" 
-        />
-      ) : (
-        <section className="grid" aria-label="Kleidungsstücke" style={{ padding: "0 var(--space-4) var(--space-8)" }}>
-          {found.map(({ item, photoId }) => (
-            <ProductCard
-              key={item.id}
-              item={{
-                id: item.id,
-                title: item.title,
-                sizeLabel: item.sizeLabel,
-                condition: item.condition,
-                holderHouseholdId: item.holderHouseholdId,
-                ownerHouseholdId: item.ownerHouseholdId,
-                archived: item.archived,
-              }}
-              photoId={photoId}
-              currentHouseholdId={holder}
-            />
-          ))}
-        </section>
-      )}
-    </AppShell>
+        {found.length === 0 ? (
+          <EmptyState 
+            text="Noch keine Kleidung vorhanden" 
+            href="/wardrobe/new" 
+            action="Erstes Kleidungsstück hinzufügen" 
+          />
+        ) : (
+          <section className="grid" aria-label="Kleidungsstücke" style={{ padding: "0 var(--space-4) var(--space-8)" }}>
+            {found.map(({ item, photoId }) => (
+              <ProductCard
+                key={item.id}
+                item={{
+                  id: item.id,
+                  title: item.title,
+                  sizeLabel: item.sizeLabel,
+                  condition: item.condition,
+                  holderHouseholdId: item.holderHouseholdId,
+                  ownerHouseholdId: item.ownerHouseholdId,
+                  archived: item.archived,
+                }}
+                photoId={photoId}
+                currentHouseholdId={holder}
+              />
+            ))}
+          </section>
+        )}
+
+        {/* Basket Action Bar */}
+        <BasketActionBar />
+      </AppShell>
+    </PackageBasketProvider>
   );
 }

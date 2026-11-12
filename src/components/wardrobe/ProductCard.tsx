@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check, Plus, Package } from "lucide-react";
+import { usePackageBasket } from "@/components/packages";
 
 interface ProductCardProps {
   item: {
@@ -15,8 +16,6 @@ interface ProductCardProps {
   };
   photoId: string | null;
   currentHouseholdId: string;
-  isSelected?: boolean;
-  onToggleSelect?: (itemId: string) => void;
   disabled?: boolean;
 }
 
@@ -32,18 +31,25 @@ export function ProductCard({
   item,
   photoId,
   currentHouseholdId,
-  isSelected = false,
-  onToggleSelect,
   disabled = false,
 }: ProductCardProps) {
+  const { items: basketItems, toggleItem, isSelected } = usePackageBasket();
+  
   const isAtHome = item.holderHouseholdId === currentHouseholdId && item.ownerHouseholdId === currentHouseholdId && !item.archived;
   const isAvailableForPackage = isAtHome;
+  const selected = isSelected(item.id);
 
   const handleSelectClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!disabled && onToggleSelect && isAvailableForPackage) {
-      onToggleSelect(item.id);
+    if (!disabled && isAvailableForPackage) {
+      toggleItem({
+        id: item.id,
+        title: item.title,
+        sizeLabel: item.sizeLabel,
+        condition: item.condition,
+        photoId: photoId,
+      });
     }
   };
 
@@ -68,12 +74,12 @@ export function ProductCard({
             type="button"
             onClick={handleSelectClick}
             disabled={disabled}
-            className={`icon-btn ${isSelected ? "active" : ""}`}
-            aria-label={isSelected ? `${item.title} aus Paket entfernen` : `${item.title} zum Paket hinzufügen`}
-            aria-pressed={isSelected}
+            className={`icon-btn ${selected ? "active" : ""}`}
+            aria-label={selected ? `${item.title} aus Paket entfernen` : `${item.title} zum Paket hinzufügen`}
+            aria-pressed={selected}
             style={{ position: "absolute", top: "var(--space-2)", right: "var(--space-2)", zIndex: 2 }}
           >
-            {isSelected ? (
+            {selected ? (
               <Check size={18} color="#27AE70" />
             ) : (
               <Plus size={18} />
