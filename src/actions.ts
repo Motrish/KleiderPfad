@@ -64,9 +64,11 @@ export async function createInvite() {
   const ctx = await getContext();
   checkRole(ctx.household.role);
   const token = randomBytes(18).toString("hex");
+  const inviteSlug = randomBytes(12).toString("base64url");
   await db.insert(householdInvites).values({
     token, householdId: ctx.household.id, createdByUserId: ctx.user.id,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    inviteSlug,
   });
   revalidatePath("/family");
 }
