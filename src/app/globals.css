@@ -219,23 +219,23 @@ input, select, textarea {
   margin: 0 auto;
   min-height: 100dvh;
   background: var(--bg-white);
-  padding: var(--space-4) 0 calc(var(--space-20) + env(safe-area-inset-bottom));
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 64px 1fr calc(72px + env(safe-area-inset-bottom));
 }
 
 /* Mobile: Content padding handled by individual components */
 .main {
   min-width: 0;
   padding: 0 var(--space-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Tablet */
 @media (min-width: 768px) {
   .shell {
     max-width: 680px;
-    padding: var(--space-6) var(--space-6) var(--space-10);
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 64px 1fr;
     box-shadow: var(--shadow-md);
     border-radius: 0;
   }
@@ -250,7 +250,7 @@ input, select, textarea {
   .shell {
     max-width: var(--max-content-desktop);
     grid-template-columns: 280px 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 72px 1fr;
     gap: var(--space-8);
     padding: var(--space-8);
     min-height: 100vh;
@@ -425,7 +425,7 @@ input, select, textarea {
   }
 }
 
-/* Bottom Navigation (Mobile) */
+/* Bottom Navigation (Mobile) - Part of grid layout */
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -434,15 +434,12 @@ input, select, textarea {
   border-top: 1px solid var(--divider);
   box-shadow: var(--shadow-nav);
   padding: var(--space-3) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
   z-index: var(--z-nav);
   max-width: 680px;
   margin: 0 auto;
   padding-top: var(--space-2);
   gap: var(--space-1);
+  grid-row: 3;
 }
 
 @media (max-width: 767px) {
@@ -1447,13 +1444,9 @@ select {
 }
 
 /* ==========================================================================
-   Action Bar (Bottom Fixed)
+   Action Bar (Bottom)
    ========================================================================== */
 .action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
   background: var(--bg-white);
   border-top: 1px solid var(--divider);
@@ -1471,6 +1464,7 @@ select {
     margin: 0;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   }
 }
 
