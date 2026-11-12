@@ -425,7 +425,7 @@ input, select, textarea {
   }
 }
 
-/* Bottom Navigation (Mobile) - Part of grid layout */
+/* Bottom Navigation (Mobile) - Sticky on mobile, in grid on desktop */
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -442,12 +442,25 @@ input, select, textarea {
   grid-row: 3;
 }
 
+/* Mobile: Sticky fixed at bottom */
 @media (max-width: 767px) {
   .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     max-width: none;
     margin: 0;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    grid-row: auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bottom-nav {
+    max-width: 680px;
+    margin: 0 auto;
   }
 }
 
