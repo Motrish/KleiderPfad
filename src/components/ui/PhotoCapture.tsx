@@ -5,16 +5,19 @@ import { Camera, RotateCcw, X, Image } from "lucide-react";
 import { Button } from "./Button";
 
 export interface PhotoCaptureProps {
-  onCapture: (file: File) => void;
+  name: string;
+  onCapture?: (file: File) => void;
   onRemove?: () => void;
   existingPhoto?: string | null;
   maxSizeMB?: number;
   acceptedTypes?: string[];
   className?: string;
   disabled?: boolean;
+  required?: boolean;
 }
 
 export function PhotoCapture({
+  name,
   onCapture,
   onRemove,
   existingPhoto,
@@ -22,12 +25,14 @@ export function PhotoCapture({
   acceptedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"],
   className = "",
   disabled = false,
+  required = false,
 }: PhotoCaptureProps) {
   const [preview, setPreview] = useState<string | null>(existingPhoto || null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   // Set srcObject on video element when stream changes
   useEffect(() => {
@@ -36,6 +41,19 @@ export function PhotoCapture({
       videoRef.current.play().catch(() => {});
     }
   }, [stream]);
+
+  // Update hidden input when preview changes
+  const updateHiddenInput = useCallback((file: File | null) => {
+    if (hiddenInputRef.current) {
+      if (file) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        hiddenInputRef.current.files = dataTransfer.files;
+      } else {
+        hiddenInputRef.current.value = "";
+      }
+    }
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (stream) {
@@ -76,7 +94,8 @@ export function PhotoCapture({
           const file = new File([blob], `photo-${Date.now()}.jpg`, { type: "image/jpeg" });
           const url = URL.createObjectURL(file);
           setPreview(url);
-          onCapture(file);
+          updateHiddenInput(file);
+          onCapture?.(file);
         }
         stopCamera();
       },
@@ -91,17 +110,20 @@ export function PhotoCapture({
 
     if (file.size > maxSizeMB * 1024 * 1024) {
       alert(`Datei zu groß. Maximum ${maxSizeMB} MB.`);
+      e.target.value = "";
       return;
     }
 
     if (!acceptedTypes.includes(file.type)) {
       alert("Nicht unterstütztes Dateiformat. Erlaubt: JPEG, PNG, WebP, HEIC.");
+      e.target.value = "";
       return;
     }
 
     const url = URL.createObjectURL(file);
     setPreview(url);
-    onCapture(file);
+    updateHiddenInput(file);
+    onCapture?.(file);
   };
 
   const handleRemove = () => {
@@ -109,6 +131,7 @@ export function PhotoCapture({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    updateHiddenInput(null);
     onRemove?.();
   };
 
@@ -117,6 +140,7 @@ export function PhotoCapture({
       URL.revokeObjectURL(preview);
     }
     setPreview(null);
+    updateHiddenInput(null);
     startCamera();
   };
 
@@ -124,6 +148,19 @@ export function PhotoCapture({
 
   return (
     <div className={`photo-capture ${className}`}>
+      {/* Hidden file input for form submission */}
+      <input
+        ref={hiddenInputRef}
+        type="file"
+        name={name}
+        accept={acceptedTypes.join(",")}
+        capture="environment"
+        className="photo-capture-input"
+        aria-hidden="true"
+        disabled={disabled}
+        required={required}
+      />
+
       {isCameraOpen && stream && (
         <div className="photo-capture-camera" role="region" aria-label="Kamera">
           <video
@@ -206,18 +243,6 @@ export function PhotoCapture({
           <p className="help text-xs mt-2">Max. {maxSizeMB} MB. Fotos werden verkleinert und ohne Metadaten gespeichert.</p>
         </div>
       )}
-
-      {/* Hidden file input for non-camera capture */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={acceptedTypes.join(",")}
-        capture="environment"
-        onChange={handleFileSelect}
-        className="photo-capture-input"
-        aria-label="Foto auswählen"
-        disabled={disabled}
-      />
     </div>
   );
 }
