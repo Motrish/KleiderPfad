@@ -3,10 +3,10 @@ import { and, eq, or, inArray, notInArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { getContext } from "@/lib/context";
-import { packages, packageItems, items, connections, households, itemPhotos } from "@/db/schema";
+import { packages, packageItems, items, connections, households, itemPhotos, transfers } from "@/db/schema";
 import { addPackageItem, removePackageItem, sendPackage } from "@/actions";
 import { AppShell } from "@/components/AppShell";
-import { Plus, Trash2, Send, ChevronLeft, Package, UserPlus } from "lucide-react";
+import { Plus, Trash2, Send, ChevronLeft, Package, UserPlus, RotateCcw, Shield, Truck } from "lucide-react";
 
 export default async function PackageDetails({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await getContext();
@@ -16,7 +16,13 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
   
   const [p] = await db.select().from(packages).where(and(eq(packages.id, id), eq(packages.householdId, ctx.household.id)));
   if (!p) notFound();
-  
+
+  // For closed packages, fetch the associated transfer to get type and dueAt
+  let transferData = null;
+  if (p.status === "closed") {
+    [transferData] = await db.select().from(transfers).where(eq(transfers.packageId, id));
+  }
+
   const chosen = await db.select({ item: items, photoId: itemPhotos.id })
     .from(packageItems)
     .innerJoin(items, eq(items.id, packageItems.itemId))
@@ -49,6 +55,7 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
     if (chosen.length === 0) {
       return (
         <div className="empty" style={{ margin: "var(--space-4)" }}>
+          <div style={{ fontSize: "48px", marginBottom: "var(--space-3)" }}>📦</div>
           <p>Dieses Paket ist noch leer.</p>
           {p.status === "draft" && (
             <Link href={`/packages/${id}`} className="btn" style={{ marginTop: "var(--space-3)" }}>
@@ -67,7 +74,7 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
             {photoId ? (
               <img src={`/api/photos/${photoId}`} alt={item.title} className="thumb" />
             ) : (
-              <div className="thumb" style={{ display: "grid", placeItems: "center", fontSize: "24px" }}>👕</div>
+              <div className="thumb" style={{ display: "grid", placeItems: "center", fontSize: "24px", background: "var(--primary-light)" }}>👕</div>
             )}
             <div className="item-info" style={{ flex: 1 }}>
               <strong>{item.title}</strong>
@@ -174,6 +181,7 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
           
           {recipients.length === 0 ? (
             <div style={{ textAlign: "center", padding: "var(--space-6)" }}>
+              <div style={{ fontSize: "48px", marginBottom: "var(--space-3)" }}>🔗</div>
               <p style={{ color: "var(--text-secondary)", marginBottom: "var(--space-4)" }}>
                 Verbinde dich zuerst mit einem anderen Haushalt unter 
                 <Link href="/family" style={{ color: "var(--primary)", fontWeight: 600 }}>Familie & Kontakte</Link>, 
@@ -205,11 +213,47 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
               </div>
               <p className="help">Der neue Besitzer wird erst nach der Bestätigung eingetragen.</p>
               <button className="btn wide" disabled={!chosen.length} style={{ marginTop: "var(--space-2)" }}>
-                <Send size={18} />
+                <Truck size={18} />
                 Paket zur Bestätigung senden
               </button>
             </form>
           )}
+        </section>
+      )}
+
+      {/* Status Info for Submitted/Closed Packages */}
+      {p.status !== "draft" && (
+        <section className="card-elevated" style={{ margin: "var(--space-4)" }}>
+          <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 600, marginBottom: "var(--space-4)" }}>
+            <Shield size={20} color="#27AE70" style={{ marginRight: "var(--space-2)", verticalAlign: "middle" }} />
+            Übergabe-Status
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            <div className="card" style={{ padding: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "var(--radius-full)", background: "var(--primary-light)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--primary)", fontWeight: 600 }}>
+                {p.status === "submitted" ? "⏳" : p.status === "closed" ? "✓" : "✕"}
+              </div>
+              <div style={{ flex: 1 }}>
+                <strong style={{ display: "block", fontSize: "var(--text-base)" }}>
+                  {p.status === "submitted" ? "Wartet auf Annahme" : p.status === "closed" ? "Übergabe abgeschlossen" : "Abgebrochen"}
+                </strong>
+                <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+                  Erstellt am {p.createdAt.toLocaleDateString("de-DE")}
+                </span>
+              </div>
+            </div>
+            {p.status === "closed" && transferData?.type === "loan" && (
+              <div className="card" style={{ padding: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+                <RotateCcw size={24} color="#27AE70" />
+                <div>
+                  <strong style={{ display: "block" }}>Leihgabe aktiv</strong>
+                  <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>
+                    {transferData?.dueAt ? `Rückgabe geplant: ${new Date(transferData.dueAt).toLocaleDateString("de-DE")}` : "Kein Rückgabedatum festgelegt"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       )}
 

@@ -8,14 +8,16 @@ export default async function NewPackage() {
 
   return (
     <AppShell household={ctx.household.name} title="Neues Paket packen" showBackButton backHref="/packages">
-      <section className="card" style={{ margin: "var(--space-4)" }}>
-        <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 600, marginBottom: "var(--space-4)" }}>
-          <Package size={20} color="#27AE70" style={{ marginRight: "var(--space-2)", verticalAlign: "middle" }} />
-          Neues Paket packen
-        </h2>
-        <p className="text-muted" style={{ marginBottom: "var(--space-6)" }}>
-          Gib deinem Paket einen Namen und eine optionale Notiz, dann füge Kleidungsstücke hinzu.
-        </p>
+      <section className="card-elevated" style={{ margin: "var(--space-4)" }}>
+        <header style={{ marginBottom: "var(--space-6)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
+            <Package size={24} color="#27AE70" />
+            <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 700, margin: 0 }}>Neues Paket packen</h2>
+          </div>
+          <p className="text-muted" style={{ margin: 0, fontSize: "var(--text-base)" }}>
+            Gib deinem Paket einen Namen und eine optionale Notiz, dann füge Kleidungsstücke hinzu.
+          </p>
+        </header>
         
         <form action={createPackage} className="fields">
           <div className="field">
@@ -34,13 +36,14 @@ export default async function NewPackage() {
             <textarea id="notes" name="notes" maxLength={1000} placeholder="z. B. für Anna" rows={3} />
           </div>
           
-          <div className="actions" style={{ marginTop: "var(--space-6)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            <button type="submit" className="btn wide" style={{ minHeight: "var(--touch-xl)", fontSize: "var(--text-lg)" }}>
+          <div className="actions" style={{ marginTop: "var(--space-8)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            <button type="submit" className="btn wide" style={{ minHeight: "56px", fontSize: "var(--text-lg)", fontWeight: 600 }}>
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-2)" }}>
+                <Package size={20} />
                 <span>Paket erstellen</span>
               </span>
             </button>
-            <button type="button" className="btn btn-outline wide" onClick={() => window.history.back()} style={{ minHeight: "var(--touch-comfortable)" }}>
+            <button type="button" className="btn btn-outline wide" onClick={() => window.history.back()} style={{ minHeight: "48px" }}>
               Abbrechen
             </button>
           </div>

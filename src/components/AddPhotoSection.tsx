@@ -6,7 +6,7 @@ import { addPhoto } from "@/actions";
 
 interface AddPhotoSectionProps {
   itemId: string;
-  onPhotoAdded: () => void;
+  onPhotoAdded?: () => void;
 }
 
 export function AddPhotoSection({ itemId, onPhotoAdded }: AddPhotoSectionProps) {
@@ -20,7 +20,7 @@ export function AddPhotoSection({ itemId, onPhotoAdded }: AddPhotoSectionProps) 
     try {
       await addPhoto.bind(null, itemId)(formData);
       setIsOpen(false);
-      onPhotoAdded();
+      onPhotoAdded?.();
     } catch (err) {
       console.error(err);
       alert("Fehler beim Hochladen: " + (err instanceof Error ? err.message : "Unbekannter Fehler"));

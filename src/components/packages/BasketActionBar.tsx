@@ -196,9 +196,9 @@ export function BasketActionBar() {
       </div>
 
       <BasketReviewModal
-        isOpen={false}
-        onClose={() => {}}
-        onSuccess={() => {}}
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        onSuccess={handleReviewSuccess}
       />
     </>
   );

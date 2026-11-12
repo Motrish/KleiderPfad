@@ -70,12 +70,12 @@ export default async function Home() {
     {/* Stats Grid */}
     <section className="stats-grid" style={{ margin: "var(--space-4)" }}>
       <div className="stat-card">
-        <div className="icon"><ShirtIcon size={20} color="#27AE70" /></div>
+        <div className="icon"><Shirt size={20} color="#27AE70" /></div>
         <div className="value">{all.filter(x => x.holder === ctx.household.id).length}</div>
         <div className="label">Bei uns</div>
       </div>
       <div className="stat-card">
-        <div className="icon"><ShirtIcon size={20} color="#27AE70" /></div>
+        <div className="icon"><Shirt size={20} color="#27AE70" /></div>
         <div className="value">{all.filter(x => x.owner === ctx.household.id && x.holder !== ctx.household.id).length}</div>
         <div className="label">Verliehen</div>
       </div>
@@ -161,7 +161,7 @@ export default async function Home() {
                     <h3 style={{ fontSize: "var(--text-base)", fontWeight: 600, margin: 0 }}>{packageTitle}</h3>
                   </div>
                   <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", margin: 0 }}>
-                    Von {transfer.fromHouseholdId} · {transfer.type === "gift" ? "Geschenk" : "Leihgabe"}
+                    Von {transfer.fromHouseholdId} · {transfer.type === "gift" ? "Geschenk" : "Leihgabe"} · {transfer.createdAt.toLocaleDateString("de-DE")}
                   </p>
                 </div>
                 <span className="pill pill-warn">Wartet auf Annahme</span>
