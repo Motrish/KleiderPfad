@@ -11,7 +11,6 @@ import { AddPhotoSection } from "@/components/AddPhotoSection";
 import { 
   ChevronLeft, 
   Edit, 
-  MoreHorizontal, 
   Package, 
   RotateCcw, 
   Trash2,
@@ -33,9 +32,13 @@ const labels: Record<string, string> = {
   transfer_declined: "Übergabe abgelehnt", loan_returned: "Zurückgegeben",
 };
 
-export default async function ItemDetails({ params }: { params: Promise<{ id: string }> }) {
+export default async function ItemDetails({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ edit?: string | string[] }>;
+}) {
   const ctx = await getContext();
   const { id } = await params;
+  const editing = (await searchParams).edit === "1";
   
   if (!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id)) notFound();
   
@@ -130,14 +133,6 @@ export default async function ItemDetails({ params }: { params: Promise<{ id: st
           <Link href="/wardrobe" className="nav-btn" aria-label="Zurück">
             <ChevronLeft size={22} />
           </Link>
-          <div style={{ display: "flex", gap: "var(--space-2)" }}>
-            <Link href={`/wardrobe/${id}/edit`} className="nav-btn" aria-label="Bearbeiten">
-              <Edit size={22} />
-            </Link>
-            <button className="nav-btn" aria-label="Mehr">
-              <MoreHorizontal size={22} />
-            </button>
-          </div>
         </div>
       </section>
 
@@ -200,7 +195,7 @@ export default async function ItemDetails({ params }: { params: Promise<{ id: st
 
       {/* Bearbeiten */}
       {own && (
-        <details className="card-elevated" style={{ margin: "0 var(--space-4) var(--space-6)" }}>
+        <details id="edit" open={editing} className="card-elevated" style={{ margin: "0 var(--space-4) var(--space-6)", scrollMarginTop: "var(--space-8)" }}>
           <summary style={{ cursor: "pointer", fontWeight: 600, padding: "var(--space-3) 0", listStyle: "none", display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
             <Edit size={20} color="#27AE70" />
             <span style={{ fontSize: "var(--text-lg)" }}>Bearbeiten</span>
@@ -209,29 +204,29 @@ export default async function ItemDetails({ params }: { params: Promise<{ id: st
           <form action={updateItem.bind(null, id)} className="fields" style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--divider)" }}>
             <div className="field">
               <label htmlFor="title">Art</label>
-              <input name="title" defaultValue={item.title} required maxLength={100} />
+              <input id="title" name="title" defaultValue={item.title} required maxLength={100} />
             </div>
             <div className="field">
               <label htmlFor="size">Größe</label>
-              <input name="size" defaultValue={item.sizeLabel} required maxLength={25} />
+              <input id="size" name="size" defaultValue={item.sizeLabel} required maxLength={25} />
             </div>
             <div className="field">
               <label htmlFor="condition">Zustand</label>
-              <select name="condition" defaultValue={item.condition}>
+              <select id="condition" name="condition" defaultValue={item.condition}>
                 {conditions.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
               </select>
             </div>
             <div className="field">
               <label htmlFor="brand">Marke</label>
-              <input name="brand" defaultValue={item.brand ?? ""} maxLength={100} />
+              <input id="brand" name="brand" defaultValue={item.brand ?? ""} maxLength={100} />
             </div>
             <div className="field">
               <label htmlFor="color">Farbe</label>
-              <input name="color" defaultValue={item.color ?? ""} maxLength={70} />
+              <input id="color" name="color" defaultValue={item.color ?? ""} maxLength={70} />
             </div>
             <div className="field">
               <label htmlFor="notes">Notiz</label>
-              <textarea name="notes" defaultValue={item.notes ?? ""} maxLength={1000} />
+              <textarea id="notes" name="notes" defaultValue={item.notes ?? ""} maxLength={1000} />
             </div>
             <button className="btn wide">Änderungen speichern</button>
           </form>
@@ -290,6 +285,11 @@ export default async function ItemDetails({ params }: { params: Promise<{ id: st
       <div className="action-bar" style={{ padding: "0 var(--space-4) var(--space-8)", display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
         <Link href="/wardrobe" className="btn btn-outline">← Kleiderschrank</Link>
         <Link href="/wardrobe/history" className="btn btn-outline">Verlauf</Link>
+        {own && (
+          <Link href={`/wardrobe/${id}?edit=1#edit`} className="btn btn-outline">
+            <Edit size={18} aria-hidden="true" /> Bearbeiten
+          </Link>
+        )}
         {own && (
           <form action={archiveItem.bind(null, id)}>
             <button className="btn btn-danger" type="submit">Archivieren</button>
