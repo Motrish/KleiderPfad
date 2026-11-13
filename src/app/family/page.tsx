@@ -70,9 +70,13 @@ export default async function Family() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)", paddingBottom: "var(--space-4)", borderBottom: "1px solid var(--divider)" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-1)" }}>Haushaltskennung</p>
-              <div className="code" style={{ wordBreak: "break-all", cursor: "pointer" }} onClick={copyToClipboard(ctx.household.id, "Haushaltskennung")}>
+              <button 
+                className="code" 
+                style={{ wordBreak: "break-all", cursor: "pointer", background: "none", border: "none", padding: 0, font: "inherit", textAlign: "left", color: "inherit" }}
+                onClick={copyToClipboard(ctx.household.id, "Haushaltskennung")}
+              >
                 {ctx.household.id}
-              </div>
+              </button>
             </div>
             <button 
               className="btn btn-outline"
@@ -172,9 +176,13 @@ export default async function Family() {
                   <div style={{ padding: "var(--space-4)" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="code" style={{ wordBreak: "break-all", cursor: "pointer", fontSize: "var(--text-sm)" }} onClick={copyToClipboard(link, "Einladungslink")}>
+                        <button 
+                          className="code" 
+                          style={{ wordBreak: "break-all", cursor: "pointer", background: "none", border: "none", padding: 0, font: "inherit", fontSize: "var(--text-sm)", color: "inherit", textAlign: "left" }}
+                          onClick={copyToClipboard(link, "Einladungslink")}
+                        >
                           {link}
-                        </div>
+                        </button>
                         <p className={`text-sm ${isExpired ? "text-error" : "text-muted"}`} style={{ marginTop: "var(--space-1)" }}>
                           {isExpired ? "Abgelaufen" : `Läuft am ${new Date(inv.expiresAt).toLocaleDateString("de-DE")} ab`}
                         </p>
