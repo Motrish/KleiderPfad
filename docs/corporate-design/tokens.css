@@ -1,0 +1,23 @@
+/* Kleidolino brand tokens – keep in sync with DESIGN_TOKENS.json */
+:root {
+  --kl-forest: #245440;
+  --kl-dark: #173D2E;
+  --kl-mint: #A8D5BA;
+  --kl-sage: #C6D8C2;
+  --kl-cream: #FFF7EC;
+  --kl-apricot: #F4B08A;
+  --kl-beige: #E8D9C8;
+  --kl-paper: #FFFCF7;
+  --kl-peach: #FCE0CB;
+  --kl-gray: #63756B;
+  --kl-border: #E7E2D8;
+  --kl-font-display: "Nunito", "Inter", system-ui, sans-serif;
+  --kl-font-body: "Inter", system-ui, sans-serif;
+  --kl-radius-chip: 999px;
+  --kl-radius-button: 14px;
+  --kl-radius-card: 18px;
+  --kl-radius-sheet: 24px;
+  --kl-touch-min: 44px;
+  --kl-touch-default: 48px;
+  --kl-shadow-card: 0 4px 16px rgba(23, 61, 46, .08);
+}

@@ -88,3 +88,8 @@ Für lokalen Betrieb ohne Docker benötigt `DATABASE_URL` eine erreichbare Postg
 - Fotos liegen auf einem eigenen persistenten Docker-Volume.
 
 Noch keine Lizenz ausgewählt.
+
+
+## Kleidolino Corporate Design
+
+- [Kleidolino Corporate Design – Logo, Farben, Brand-Kit und Assets](docs/corporate-design/README.md)

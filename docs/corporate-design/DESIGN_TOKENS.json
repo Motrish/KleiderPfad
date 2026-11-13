@@ -1,0 +1,101 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "Kleidolino",
+  "version": "1.0.0",
+  "description": "Original corporate design tokens for the family clothing sharing application.",
+  "colors": {
+    "forest": {
+      "$type": "color",
+      "$value": "#245440",
+      "description": "Brand primary green"
+    },
+    "forestDark": {
+      "$type": "color",
+      "$value": "#173D2E"
+    },
+    "mint": {
+      "$type": "color",
+      "$value": "#A8D5BA"
+    },
+    "sage": {
+      "$type": "color",
+      "$value": "#C6D8C2"
+    },
+    "cream": {
+      "$type": "color",
+      "$value": "#FFF7EC"
+    },
+    "apricot": {
+      "$type": "color",
+      "$value": "#F4B08A"
+    },
+    "beige": {
+      "$type": "color",
+      "$value": "#E8D9C8"
+    },
+    "paper": {
+      "$type": "color",
+      "$value": "#FFFCF7"
+    },
+    "peach": {
+      "$type": "color",
+      "$value": "#FCE0CB"
+    },
+    "gray": {
+      "$type": "color",
+      "$value": "#63756B"
+    },
+    "line": {
+      "$type": "color",
+      "$value": "#E7E2D8"
+    }
+  },
+  "typography": {
+    "display": {
+      "family": "Nunito, Inter, system-ui, sans-serif",
+      "weight": 800
+    },
+    "body": {
+      "family": "Inter, system-ui, sans-serif",
+      "weight": 400
+    },
+    "sizes": {
+      "xs": 12,
+      "sm": 14,
+      "base": 16,
+      "lg": 18,
+      "h2": 24,
+      "h1Mobile": 30,
+      "h1Desktop": 42
+    }
+  },
+  "shape": {
+    "radius": {
+      "chip": 999,
+      "button": 14,
+      "card": 18,
+      "sheet": 24,
+      "appIcon": 112
+    }
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32,
+    48,
+    64
+  ],
+  "interaction": {
+    "minTarget": 44,
+    "recommendedTarget": 48
+  },
+  "breakpoint": {
+    "mobile": 480,
+    "tablet": 768,
+    "desktop": 1024
+  }
+}
