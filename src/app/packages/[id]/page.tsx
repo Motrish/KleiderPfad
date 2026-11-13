@@ -176,7 +176,7 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
         <section className="card-soft" style={{ margin: "var(--space-4)", padding: "var(--space-5)" }}>
           <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 600, marginBottom: "var(--space-4)" }}>
             <Package size={20} color="#27AE70" style={{ marginRight: "var(--space-2)", verticalAlign: "middle" }} />
-            Paket übergeben
+            Verschenken oder verleihen
           </h3>
           
           {recipients.length === 0 ? (
@@ -203,15 +203,15 @@ export default async function PackageDetails({ params }: { params: Promise<{ id:
               <div className="field">
                 <label>Art der Übergabe</label>
                 <select name="type" defaultValue="gift">
-                  <option value="gift">Verschenken</option>
-                  <option value="loan">Verleihen</option>
+                  <option value="gift">Verschenken – Eigentum geht nach Annahme über</option>
+                  <option value="loan">Verleihen – Eigentum bleibt bei uns</option>
                 </select>
               </div>
               <div className="field">
                 <label>Optionales Rückgabedatum (bei Leihgabe)</label>
                 <input type="date" name="dueAt" />
               </div>
-              <p className="help">Der neue Besitzer wird erst nach der Bestätigung eingetragen.</p>
+              <p className="help">Verschenken ist vorausgewählt. Beim Verleihen bleibt das Eigentum bei euch; ein Rückgabedatum ist optional. Die Übergabe wird erst nach der Bestätigung wirksam.</p>
               <button className="btn wide" disabled={!chosen.length} style={{ marginTop: "var(--space-2)" }}>
                 <Truck size={18} />
                 Paket zur Bestätigung senden

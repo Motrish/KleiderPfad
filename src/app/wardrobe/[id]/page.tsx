@@ -8,7 +8,7 @@ import { itemPhotos, itemEvents, transfers, households, categories } from "@/db/
 import { updateItem, addPhoto, archiveItem } from "@/actions";
 import { AppShell } from "@/components/AppShell";
 import { AddPhotoSection } from "@/components/AddPhotoSection";
-import { ItemPhoto } from "@/components/ItemPhoto";
+import { ItemGallery } from "@/components/ItemGallery";
 import { 
   ChevronLeft, 
   Edit, 
@@ -61,7 +61,8 @@ export default async function ItemDetails({ params, searchParams }: {
   const own = item.ownerHouseholdId === ctx.household.id && item.holderHouseholdId === ctx.household.id && !item.archived;
   const historical = item.ownerHouseholdId !== ctx.household.id && item.holderHouseholdId !== ctx.household.id;
   
-  const primaryPhoto = photos.find(p => p.isPrimary) || photos[0];
+  const orderedPhotos = [...photos].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+  const primaryPhoto = orderedPhotos[0];
   const categoryName = item.categoryId ? 
     (await db.select({ name: categories.name }).from(categories).where(eq(categories.id, item.categoryId)).limit(1))[0]?.name 
     : null;
@@ -80,48 +81,28 @@ export default async function ItemDetails({ params, searchParams }: {
     >
       {/* Foto-Hero mit Galerie */}
       <section className="detail-hero" style={{ margin: "calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-6)" }}>
-        <div className="hero-image">
-          <ItemPhoto photoId={primaryPhoto?.id} title={item.title} />
-        </div>
-        <div className="hero-overlay" style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "var(--space-4) var(--space-4) var(--space-6)", background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.6))" }}>
-          <h1 style={{ color: "white", fontSize: "var(--text-2xl)", fontWeight: 700, margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+        <ItemGallery photos={orderedPhotos} title={item.title} />
+        <div className="hero-caption">
+          <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: 0 }}>
             {item.title}
           </h1>
           <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-2)", flexWrap: "wrap" }}>
-            <span className="size-badge" style={{ background: "rgba(255,255,255,0.9)", color: "var(--text-primary)" }}>
+            <span className="size-badge">
               Größe {item.sizeLabel}
             </span>
             {categoryName && (
-              <span className="pill pill-info" style={{ background: "rgba(255,255,255,0.9)" }}>
+              <span className="pill pill-info">
                 {categoryName}
               </span>
             )}
-            <span className={`pill ${conditionColor}`} style={{ background: "rgba(255,255,255,0.9)" }}>
+            <span className={`pill ${conditionColor}`}>
               {conditionText}
             </span>
-            <span className={`pill ${locationColor}`} style={{ background: "rgba(255,255,255,0.9)" }}>
+            <span className={`pill ${locationColor}`}>
               {locationText}
             </span>
           </div>
         </div>
-        
-        {/* Galerie-Indikator */}
-        {photos.length > 1 && (
-          <div style={{ position: "absolute", bottom: "var(--space-4)", right: "var(--space-4)", display: "flex", gap: "var(--space-1)" }}>
-            {photos.map((photo, i) => (
-              <span 
-                key={photo.id} 
-                style={{ 
-                  width: "8px", height: "8px", borderRadius: "50%", 
-                  background: photo.isPrimary ? "var(--primary)" : "rgba(255,255,255,0.5)",
-                  border: "2px solid rgba(255,255,255,0.3)",
-                  cursor: "pointer",
-                  transition: "transform 0.2s",
-                }}
-              />
-            ))}
-          </div>
-        )}
         
         {/* Nav-Buttons */}
         <div className="hero-nav">
@@ -130,30 +111,6 @@ export default async function ItemDetails({ params, searchParams }: {
           </Link>
         </div>
       </section>
-
-      {/* Galerie - horizontale Scroll */}
-      {photos.length > 1 && (
-        <section className="photo-gallery" style={{ margin: "0 var(--space-4) var(--space-6)", paddingBottom: "var(--space-2)" }}>
-          <div style={{ display: "flex", gap: "var(--space-3)", overflowX: "auto", padding: "var(--space-2) 0", margin: "0 calc(var(--space-4) * -1)", scrollSnapType: "x mandatory" }}>
-            {photos.map(photo => (
-              <div key={photo.id} style={{ flex: "0 0 85%", maxWidth: "280px", scrollSnapAlign: "start" }}>
-                <img 
-                  src={`/api/photos/${photo.id}`} 
-                  alt={`${item.title} - Foto ${photos.indexOf(photo) + 1}`}
-                  style={{ 
-                    width: "100%", 
-                    aspectRatio: "4/3", 
-                    objectFit: "cover", 
-                    borderRadius: "var(--radius-card)",
-                    border: photo.isPrimary ? "2px solid var(--primary)" : "none",
-                    boxShadow: "var(--shadow-md)",
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Details Section - kompakt */}
       <section className="card-elevated" style={{ margin: "0 var(--space-4) var(--space-6)" }}>
@@ -245,7 +202,11 @@ export default async function ItemDetails({ params, searchParams }: {
               const directlyInvolved = transfer && (transfer.fromHouseholdId === ctx.household.id || transfer.toHouseholdId === ctx.household.id);
               const partner = transfer ? (transfer.fromHouseholdId === ctx.household.id ? transfer.toHouseholdId : transfer.fromHouseholdId) : null;
               const counterpart = directlyInvolved && partner ? (names[partner] || "verbundene Familie") : "weitere Familie";
-              const heading = event.eventType === "transfer_accepted" && transfer?.type === "loan" ? "Verliehen" : labels[event.eventType] || event.eventType;
+              const heading = event.eventType === "transfer_accepted" && transfer?.type === "loan"
+                ? "Verliehen"
+                : event.eventType === "transfer_accepted" && transfer?.type === "gift"
+                  ? "Verschenkt"
+                  : labels[event.eventType] || event.eventType;
               
               return (
                 <div key={event.id} className="timeline-item" style={{ 

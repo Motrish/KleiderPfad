@@ -41,6 +41,7 @@ async function detail({ edit, own = true } = {}) {
     "@/components/AppShell": { AppShell: "app-shell" },
     "@/components/AddPhotoSection": { AddPhotoSection: "add-photo" },
     "@/components/ItemPhoto": { ItemPhoto: "item-photo" },
+    "@/components/ItemGallery": { ItemGallery: "item-gallery" },
     "next/link": { default: "a" },
   });
   return elements(await Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ edit }) }));
@@ -95,6 +96,43 @@ test("item photo uses an accessible foreground and a decorative blurred copy", (
   assert.ok(html.includes('aria-hidden="true"'));
   const empty = renderToStaticMarkup(createElement(ItemPhoto, { title: "Jacke" }));
   assert.ok(!empty.includes("<img"));
+});
+
+test("item gallery starts with primary photo and renders swipeable slides with thumbnails", () => {
+  const ItemGallery = loadPage("../src/components/ItemGallery.tsx", {
+    "@/components/ItemPhoto": {
+      ItemPhoto: ({ photoId, title }) => createElement("img", { src: photoId, alt: title }),
+    },
+  }, "ItemGallery");
+  const html = renderToStaticMarkup(createElement(ItemGallery, {
+    photos: [{ id: "second" }, { id: "first", isPrimary: true }],
+    title: "Jacke",
+  }));
+  assert.ok(html.indexOf('/api/photos/first') < html.indexOf('/api/photos/second'));
+  assert.ok(html.includes('aria-label="Foto 1 anzeigen"'));
+  assert.ok(html.includes('aria-pressed="true"'));
+  assert.ok(html.includes('aria-label="Foto 2 anzeigen"'));
+  assert.ok(html.includes('data-gallery-track'));
+});
+
+test("transfer form leads with gifting while keeping loans selectable", () => {
+  const source = readFileSync(new URL("../src/app/packages/[id]/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /name="type"\s+defaultValue="gift"/);
+  assert.match(source, /option value="gift">Verschenken[^<]*Eigentum/);
+  assert.match(source, /option value="loan">Verleihen[^<]*Eigentum/);
+  assert.match(source, /Verschenken oder verleihen/);
+  const detail = readFileSync(new URL("../src/app/wardrobe/[id]/page.tsx", import.meta.url), "utf8");
+  assert.match(detail, /transfer\?\.type === "gift"\s*\?\s*"Verschenkt"/);
+  const actions = readFileSync(new URL("../src/actions.ts", import.meta.url), "utf8");
+  assert.match(actions, /ownerHouseholdId:\s*t\.type\s*===\s*"gift"\s*\?\s*t\.toHouseholdId\s*:\s*t\.fromHouseholdId/);
+});
+
+test("item foreground preserves the original image ratio", () => {
+  const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+  const imageStyles = css.match(/\.item-photo \.item-photo-foreground\s*\{([^}]+)\}/)?.[1] ?? "";
+  assert.ok(!imageStyles.includes("aspect-ratio"));
+  assert.ok(imageStyles.includes("object-fit: contain"));
+  assert.ok(imageStyles.includes("max-height: 100%"));
 });
 
 test("item actions include editing and no inactive More button", async () => {
