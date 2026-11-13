@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AccountMenu } from "@/components/AccountMenu";
 import {
   Home,
   Shirt,
   Package,
   Users,
-  Bell,
   ChevronLeft,
   Plus,
 } from "lucide-react";
@@ -27,7 +27,6 @@ const navigation = [
   { href: "/wardrobe", label: "Kleidung", icon: Shirt },
   { href: "/packages", label: "Pakete", icon: Package },
   { href: "/family", label: "Familie", icon: Users },
-  { href: "/notifications", label: "Benachrichtigungen", icon: Bell },
 ] as const;
 
 export function AppShell({ 
@@ -68,16 +67,7 @@ export function AppShell({
           </Link>
         )}
         <div className="header-actions">
-          <Link 
-            href="/notifications" 
-            className="icon-btn" 
-            aria-label={unreadNotifications > 0 ? `${unreadNotifications} ungelesene Benachrichtigungen` : "Benachrichtigungen"}
-          >
-            <Bell size={22} />
-            {unreadNotifications > 0 && (
-              <span className="badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
-            )}
-          </Link>
+          <AccountMenu household={household} unreadNotifications={unreadNotifications} />
         </div>
       </header>
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { eq, or, and, desc, inArray } from "drizzle-orm";
-import { auth, signIn, signOut } from "@/auth";
+import { auth, signIn } from "@/auth";
 import { getContext } from "@/lib/context";
 import { db } from "@/lib/db";
 import { items, packages, notifications, transfers, households, packageItems, itemPhotos } from "@/db/schema";
@@ -207,10 +207,5 @@ export default async function Home() {
       </section>
     )}
 
-    <div className="actions">
-      <form action={async()=>{"use server";await signOut();}}>
-        <button className="btn btn-outline">Abmelden</button>
-      </form>
-    </div>
   </AppShell>;
 }

@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const id = "b0e9904c-ef16-49a9-9c31-41461075b8aa";
 
-function loadPage(path, mocks) {
+function loadPage(path, mocks, exportName = "default") {
   const source = readFileSync(new URL(path, import.meta.url), "utf8");
   const { outputText, diagnostics } = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
@@ -18,7 +20,7 @@ function loadPage(path, mocks) {
   new Function("require", "module", "exports", outputText)(
     name => name in mocks ? mocks[name] : require(name), module, module.exports,
   );
-  return module.exports.default;
+  return module.exports[exportName];
 }
 
 function elements(node) {
@@ -38,7 +40,8 @@ async function detail({ edit, own = true } = {}) {
     "@/actions": { updateItem() {}, archiveItem() {} },
     "@/components/AppShell": { AppShell: "app-shell" },
     "@/components/AddPhotoSection": { AddPhotoSection: "add-photo" },
-    "next/link": "a",
+    "@/components/ItemPhoto": { ItemPhoto: "item-photo" },
+    "next/link": { default: "a" },
   });
   return elements(await Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ edit }) }));
 }
@@ -50,6 +53,48 @@ test("legacy edit URL opens the existing editor", async () => {
   await assert.rejects(Page({ params: Promise.resolve({ id }) }), {
     message: `/wardrobe/${id}?edit=1#edit`,
   });
+});
+
+test("account popup replaces notifications in primary navigation", () => {
+  const AppShell = loadPage("../src/components/AppShell.tsx", {
+    "next/navigation": { usePathname: () => "/wardrobe" },
+    "next/link": { default: "a" },
+    "@/components/AccountMenu": { AccountMenu: "account-menu" },
+  }, "AppShell");
+  const html = renderToStaticMarkup(createElement(AppShell, { household: "Testfamilie" }));
+  assert.ok(html.includes("account-menu"));
+  assert.ok(!html.includes('href="/notifications"'));
+});
+
+test("account popup contains working destinations and a logout form", () => {
+  const AccountMenu = loadPage("../src/components/AccountMenu.tsx", {
+    "next/link": { default: "a" },
+    "@/actions/account": { logout() {} },
+  }, "AccountMenu");
+  const html = renderToStaticMarkup(createElement(AccountMenu, { household: "Testfamilie", unreadNotifications: 2 }));
+  for (const path of ["/profile", "/settings", "/notifications"]) assert.ok(html.includes(`href="${path}"`));
+  assert.ok(html.includes('popover="auto"'));
+  assert.ok(html.includes("<form"));
+  assert.ok(html.includes("Abmelden"));
+});
+
+test("logout invalidates the session and returns to the start page", async () => {
+  let options;
+  const logout = loadPage("../src/actions/account.ts", {
+    "@/auth": { signOut: async input => { options = input; } },
+  }, "logout");
+  await logout();
+  assert.deepEqual(options, { redirectTo: "/" });
+});
+
+test("item photo uses an accessible foreground and a decorative blurred copy", () => {
+  const ItemPhoto = loadPage("../src/components/ItemPhoto.tsx", {}, "ItemPhoto");
+  const html = renderToStaticMarkup(createElement(ItemPhoto, { photoId: "photo", title: "Jacke" }));
+  assert.ok(html.includes('alt="Jacke"'));
+  assert.ok(html.includes('class="item-photo-backdrop"'));
+  assert.ok(html.includes('aria-hidden="true"'));
+  const empty = renderToStaticMarkup(createElement(ItemPhoto, { title: "Jacke" }));
+  assert.ok(!empty.includes("<img"));
 });
 
 test("item actions include editing and no inactive More button", async () => {

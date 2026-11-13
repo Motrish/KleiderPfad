@@ -58,6 +58,8 @@ export async function renameHousehold(form:FormData) {
   await db.update(households).set({name}).where(eq(households.id,ctx.household.id));
   revalidatePath("/family");
   revalidatePath("/");
+  revalidatePath("/settings");
+  revalidatePath("/profile");
 }
 
 export async function createInvite() {

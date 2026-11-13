@@ -8,6 +8,7 @@ import { itemPhotos, itemEvents, transfers, households, categories } from "@/db/
 import { updateItem, addPhoto, archiveItem } from "@/actions";
 import { AppShell } from "@/components/AppShell";
 import { AddPhotoSection } from "@/components/AddPhotoSection";
+import { ItemPhoto } from "@/components/ItemPhoto";
 import { 
   ChevronLeft, 
   Edit, 
@@ -80,13 +81,7 @@ export default async function ItemDetails({ params, searchParams }: {
       {/* Foto-Hero mit Galerie */}
       <section className="detail-hero" style={{ margin: "calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-6)" }}>
         <div className="hero-image">
-          {primaryPhoto ? (
-            <img src={`/api/photos/${primaryPhoto.id}`} alt={item.title} />
-          ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "80px", background: "var(--primary-light)" }}>
-              👕
-            </div>
-          )}
+          <ItemPhoto photoId={primaryPhoto?.id} title={item.title} />
         </div>
         <div className="hero-overlay" style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "var(--space-4) var(--space-4) var(--space-6)", background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.6))" }}>
           <h1 style={{ color: "white", fontSize: "var(--text-2xl)", fontWeight: 700, margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>

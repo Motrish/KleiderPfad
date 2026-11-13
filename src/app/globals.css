@@ -312,6 +312,51 @@ input, select, textarea {
   gap: var(--space-2);
 }
 
+.account-trigger { position: relative; }
+
+.account-menu {
+  position: fixed;
+  inset: 76px var(--space-4) auto auto;
+  margin: 0;
+  padding: var(--space-2);
+  width: min(290px, calc(100vw - 32px));
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-card);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.account-menu-heading {
+  padding: var(--space-3);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.account-menu a, .account-menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.account-menu a:hover, .account-menu button:hover {
+  background: var(--primary-light);
+}
+
+.account-menu form {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--divider);
+}
+
 .icon-btn {
   display: grid;
   place-items: center;
@@ -1331,22 +1376,63 @@ select {
 
 .product-card .image-wrapper {
   position: relative;
-  aspect-ratio: 1 / 1;
   background: var(--bg);
   overflow: hidden;
   width: 100%;
   max-width: 100%;
 }
 
-.product-card .image-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-slow);
+.item-photo {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: clamp(240px, 50svh, 440px);
+  overflow: hidden;
+  background: var(--primary-light);
 }
 
-.product-card:hover .image-wrapper img {
-  transform: scale(1.05);
+.item-photo-compact { height: clamp(180px, 28vw, 280px); }
+
+.item-photo .item-photo-backdrop {
+  position: absolute;
+  inset: -24px;
+  width: calc(100% + 48px);
+  height: calc(100% + 48px);
+  object-fit: cover;
+  filter: blur(20px) brightness(0.8);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.item-photo .item-photo-foreground {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 1 / 2;
+  object-fit: contain;
+  background: var(--primary-light);
+}
+
+.item-photo-placeholder { font-size: 64px; }
+
+.detail-hero { position: relative; overflow: hidden; }
+.hero-nav {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+}
+.hero-nav .nav-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .product-card .status-badge {
