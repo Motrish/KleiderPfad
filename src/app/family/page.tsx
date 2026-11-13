@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { connections, households, householdInvites, householdMembers, users } from "@/db/schema";
 import { selectHousehold, createHousehold, createInvite, joinHousehold, requestConnection, acceptConnection, renameHousehold } from "@/actions";
 import { AppShell } from "@/components/AppShell";
+import { CopyableCode } from "@/components/ui/CopyableCode";
 import { Plus, Users, Link2, UserPlus, Home, ChevronLeft, Copy, Check, AlertCircle, Shield, Mail, UserCheck, UserX, Shield as ShieldIcon, UserCheck as UserCheckIcon, Users as UsersIcon } from "lucide-react";
 
 const roleIcons = {
@@ -37,10 +38,6 @@ export default async function Family() {
 
   const inviteLink = (slug: string) => `${origin}/family/join/${slug}`;
 
-  const copyToClipboard = (text: string, label: string) => async () => {
-    await navigator.clipboard.writeText(text);
-  };
-
   return (
     <AppShell household={ctx.household.name} title="Familie & Kontakte">
       {/* Active Household */}
@@ -70,17 +67,11 @@ export default async function Family() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-4)", paddingBottom: "var(--space-4)", borderBottom: "1px solid var(--divider)" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-1)" }}>Haushaltskennung</p>
-              <button 
-                className="code" 
-                style={{ wordBreak: "break-all", cursor: "pointer", background: "none", border: "none", padding: 0, font: "inherit", textAlign: "left", color: "inherit" }}
-                onClick={copyToClipboard(ctx.household.id, "Haushaltskennung")}
-              >
-                {ctx.household.id}
-              </button>
+              <CopyableCode text={ctx.household.id} label="Haushaltskennung" fontSize="var(--text-sm)" />
             </div>
             <button 
               className="btn btn-outline"
-              onClick={copyToClipboard(ctx.household.id, "Haushaltskennung")}
+              onClick={() => navigator.clipboard.writeText(ctx.household.id)}
               style={{ whiteSpace: "nowrap" }}
             >
               <Copy size={16} />
@@ -176,13 +167,7 @@ export default async function Family() {
                   <div style={{ padding: "var(--space-4)" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <button 
-                          className="code" 
-                          style={{ wordBreak: "break-all", cursor: "pointer", background: "none", border: "none", padding: 0, font: "inherit", fontSize: "var(--text-sm)", color: "inherit", textAlign: "left" }}
-                          onClick={copyToClipboard(link, "Einladungslink")}
-                        >
-                          {link}
-                        </button>
+                        <CopyableCode text={link} label="Einladungslink" fontSize="var(--text-sm)" />
                         <p className={`text-sm ${isExpired ? "text-error" : "text-muted"}`} style={{ marginTop: "var(--space-1)" }}>
                           {isExpired ? "Abgelaufen" : `Läuft am ${new Date(inv.expiresAt).toLocaleDateString("de-DE")} ab`}
                         </p>
@@ -191,7 +176,7 @@ export default async function Family() {
                         <button
                           type="button"
                           className="btn btn-outline"
-                          onClick={copyToClipboard(link, "Einladungslink")}
+                          onClick={() => navigator.clipboard.writeText(link)}
                           disabled={isExpired}
                         >
                           <Copy size={16} />
