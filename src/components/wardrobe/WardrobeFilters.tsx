@@ -167,12 +167,44 @@ export async function WardrobeFilters({
             aria-label="Kleidung durchsuchen"
           />
           {query && (
-            <a href="/wardrobe" className="icon-btn" aria-label="Suche zurücksetzen">
+            <a 
+              href="/wardrobe" 
+              className="icon-btn" 
+              aria-label="Suche zurücksetzen"
+              style={{ 
+                display: "grid", 
+                placeItems: "center", 
+                width: "var(--touch-comfortable)", 
+                height: "var(--touch-comfortable)",
+                borderRadius: "var(--radius-full)",
+                background: "transparent",
+                color: "var(--text-secondary)",
+                border: "none",
+                textDecoration: "none",
+                transition: "background var(--transition-fast), color var(--transition-fast)"
+              }}
+            >
               <X size={20} color="#A5B0A9" />
             </a>
           )}
         </div>
-        <Link href="/wardrobe" className="icon-btn" aria-label="Filter zurücksetzen">
+        <Link 
+          href="/wardrobe" 
+          className="icon-btn" 
+          aria-label="Filter zurücksetzen"
+          style={{ 
+            display: "grid", 
+            placeItems: "center", 
+            width: "var(--touch-comfortable)", 
+            height: "var(--touch-comfortable)",
+            borderRadius: "var(--radius-full)",
+            background: "transparent",
+            color: "var(--text-secondary)",
+            border: "none",
+            textDecoration: "none",
+            transition: "background var(--transition-fast), color var(--transition-fast)"
+          }}
+        >
           <RotateCcw size={20} />
         </Link>
       </form>

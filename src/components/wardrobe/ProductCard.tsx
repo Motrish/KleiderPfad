@@ -57,7 +57,7 @@ export function ProductCard({
     <article className="product-card">
       <Link href={`/wardrobe/${item.id}`} className="image-wrapper" aria-label={`${item.title} ansehen`}>
         {photoId ? (
-          <img src={`/api/photos/${photoId}`} alt={item.title} loading="lazy" />
+          <img src={`/api/photos/${photoId}`} alt={item.title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", background: "var(--bg)" }}>
             👕
