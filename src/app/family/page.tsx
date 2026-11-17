@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { connections, households, householdInvites, householdMembers, users } from "@/db/schema";
 import { selectHousehold, createHousehold, createInvite, joinHousehold, requestConnection, acceptConnection, renameHousehold } from "@/actions";
 import { AppShell } from "@/components/AppShell";
-import { Plus, Users, Link2, UserPlus, Home, ChevronLeft, Copy, Check, AlertCircle } from "lucide-react";
+import { ClipboardButton } from "@/components/ClipboardButton";
+import { Plus, Users, Link2, UserPlus, Home, ChevronLeft, Check, AlertCircle } from "lucide-react";
 
 export default async function Family() {
   const ctx = await getContext();
@@ -47,18 +48,11 @@ export default async function Family() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 200 }}>
             <p style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginBottom: "var(--space-1)" }}>Haushaltskennung</p>
-            <div className="code" style={{ wordBreak: "break-all", cursor: "pointer" }} onClick={() => navigator.clipboard.writeText(ctx.household.id)}>
+            <div className="code" style={{ wordBreak: "break-all" }}>
               {ctx.household.id}
             </div>
           </div>
-          <button 
-            className="btn btn-outline"
-            onClick={() => navigator.clipboard.writeText(ctx.household.id)}
-            style={{ whiteSpace: "nowrap" }}
-          >
-            <Copy size={16} />
-            Kopieren
-          </button>
+          <ClipboardButton value={ctx.household.id} />
         </div>
 
         {["owner", "admin"].includes(ctx.household.role) && (
@@ -133,7 +127,7 @@ export default async function Family() {
               <div key={inv.token} className="card" style={{ marginTop: "var(--space-3)" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
                   <div className="flex-1 min-w-0">
-                    <div className="code" style={{ wordBreak: "break-all", cursor: "pointer" }} onClick={() => navigator.clipboard.writeText(link)}>
+                    <div className="code" style={{ wordBreak: "break-all" }}>
                       {link}
                     </div>
                     <p className={`text-sm ${isExpired ? "text-error" : "text-muted"}`} style={{ marginTop: "var(--space-1)" }}>
@@ -141,15 +135,9 @@ export default async function Family() {
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      onClick={() => navigator.clipboard.writeText(link)}
-                      disabled={isExpired}
-                    >
-                      <Copy size={16} />
-                      Kopieren
-                    </button>
+                    <span aria-disabled={isExpired || undefined}>
+                      <ClipboardButton value={link} disabled={isExpired} />
+                    </span>
                     {isExpired && (
                       <span className="pill pill-danger" style={{ alignSelf: "center" }}>Abgelaufen</span>
                     )}

@@ -140,7 +140,7 @@ export async function createItem(form: FormData) {
     return created;
   });
   revalidatePath("/wardrobe");
-  redirect("/wardrobe/"+created.id);
+  return created.id;
 }
 export async function updateItem(id: string,form:FormData) {
   const ctx=await getContext();uuid(id);

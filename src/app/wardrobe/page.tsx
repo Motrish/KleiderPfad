@@ -24,6 +24,15 @@ export default async function Wardrobe({ searchParams }: { searchParams: Promise
   const condition = (params.condition || "").trim().slice(0, 25);
   const status = (params.status || "").trim().slice(0, 24);
   const holder = ctx.household.id;
+  const filterHref = (nextCondition: string) => {
+    const next = new URLSearchParams();
+    if (query) next.set("q", query);
+    if (size) next.set("size", size);
+    if (nextCondition) next.set("condition", nextCondition);
+    if (status) next.set("status", status);
+    const search = next.toString();
+    return search ? `/wardrobe?${search}` : "/wardrobe";
+  };
 
   const statusFilter = status === "at_home" ? eq(items.holderHouseholdId, holder) :
     status === "lent" ? and(eq(items.ownerHouseholdId, holder), ne(items.holderHouseholdId, holder)) :
@@ -80,9 +89,9 @@ export default async function Wardrobe({ searchParams }: { searchParams: Promise
 
       {/* Filter Chips */}
       <div className="filter-chips">
-        <button className={`filter-chip ${!condition ? "active" : "inactive"}`} onClick={() => window.location.href = "/wardrobe" + new URLSearchParams({ ...params, condition: "" }).toString()}>
+        <Link href={filterHref("")} className={`filter-chip ${!condition ? "active" : "inactive"}`} aria-current={!condition ? "page" : undefined}>
           Alle
-        </button>
+        </Link>
         {[
           ["Body", "Bodys"],
           ["Strampler", "Strampler"],
@@ -97,13 +106,14 @@ export default async function Wardrobe({ searchParams }: { searchParams: Promise
           ["Schuhe", "Schuhe"],
           ["Sonstiges", "Sonstiges"],
         ].map(([val, label]) => (
-          <button 
-            key={val} 
+          <Link
+            key={val}
+            href={filterHref(val)}
             className={`filter-chip ${condition === val ? "active" : "inactive"}`}
-            onClick={() => window.location.href = "/wardrobe" + new URLSearchParams({ ...params, condition: val }).toString()}
+            aria-current={condition === val ? "page" : undefined}
           >
             {label}
-          </button>
+          </Link>
         ))}
       </div>
 

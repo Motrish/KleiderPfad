@@ -9,6 +9,7 @@ import {
   Plus,
   ChevronLeft,
 } from "lucide-react";
+import { AccountMenu } from "@/components/AccountMenu";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -62,6 +63,7 @@ export function AppShell({
           </Link>
         )}
         <div className="header-actions">
+          <div className="desktop-account-menu"><AccountMenu household={household} unreadNotifications={unreadNotifications} /></div>
           <Link 
             href="/notifications" 
             className="icon-btn" 
@@ -135,7 +137,7 @@ export function AppShell({
             <Link
               key={item.href}
               href={item.href}
-              className={isActive ? "active" : ""}
+              className={`${isActive ? "active" : ""} ${item.href === "/" ? "nav-overview" : "nav-wardrobe"}`}
               aria-current={isActive ? "page" : undefined}
             >
               {"asset" in item ? <img src={item.asset} width="24" height="24" alt="" aria-hidden="true" /> : <item.icon size={24} aria-hidden="true" />}
@@ -151,12 +153,13 @@ export function AppShell({
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = "icon" in item ? item.icon : Leaf;
           return (
-            <Link key={item.href} href={item.href} className={isActive ? "active" : ""} aria-current={isActive ? "page" : undefined}>
+            <Link key={item.href} href={item.href} className={`${isActive ? "active" : ""} ${item.href === "/packages" ? "nav-packages" : "nav-family"}`} aria-current={isActive ? "page" : undefined}>
               <Icon size={24} aria-hidden="true" />
               <span>{item.label}</span>
             </Link>
           );
         })}
+        <div className="bottom-account-menu nav-account"><AccountMenu household={household} unreadNotifications={unreadNotifications} /></div>
       </nav>
     </main>
   );
