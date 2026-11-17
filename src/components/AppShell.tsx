@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
-  Shirt,
+  Leaf,
   Package,
   Users,
-  Bell,
+  Plus,
   ChevronLeft,
 } from "lucide-react";
 
@@ -22,11 +21,10 @@ interface AppShellProps {
 }
 
 const navigation = [
-  { href: "/", label: "Übersicht", icon: Home },
-  { href: "/wardrobe", label: "Kleidung", icon: Shirt },
+  { href: "/", label: "Übersicht", icon: Leaf },
+  { href: "/wardrobe", label: "Kleidung", asset: "/brand/kit/icons/hanger.svg" },
   { href: "/packages", label: "Pakete", icon: Package },
   { href: "/family", label: "Familie", icon: Users },
-  { href: "/notifications", label: "Benachrichtigungen", icon: Bell },
 ] as const;
 
 export function AppShell({ 
@@ -59,11 +57,8 @@ export function AppShell({
           </Link>
         )}
         {!showBackButton && (
-          <Link href="/" className="brand" aria-label="KleiderPfad Startseite">
-            <span className="brand-icon" aria-hidden="true">
-              <Shirt size={24} color="white" />
-            </span>
-            KleiderPfad
+          <Link href="/" className="brand" aria-label="Kleidolino – Startseite">
+            <img className="brand-logo" src="/brand/kit/logos/primary-horizontal.svg" alt="Kleidolino – Kleine Kleidung. Große Geschichten." />
           </Link>
         )}
         <div className="header-actions">
@@ -72,7 +67,7 @@ export function AppShell({
             className="icon-btn" 
             aria-label={unreadNotifications > 0 ? `${unreadNotifications} ungelesene Benachrichtigungen` : "Benachrichtigungen"}
           >
-            <Bell size={22} />
+            <img src="/brand/kit/icons/bell.svg" width="24" height="24" alt="" aria-hidden="true" />
             {unreadNotifications > 0 && (
               <span className="badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
             )}
@@ -84,7 +79,6 @@ export function AppShell({
       <aside className="sidebar" aria-label="Hauptnavigation">
         <nav className="sidebar-nav">
           {navigation.map((item) => {
-            const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             return (
               <Link
@@ -93,7 +87,7 @@ export function AppShell({
                 className={isActive ? "active" : ""}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon size={22} aria-hidden="true" />
+                {"asset" in item ? <img src={item.asset} width="24" height="24" alt="" aria-hidden="true" /> : <item.icon size={22} aria-hidden="true" />}
                 {item.label}
               </Link>
             );
@@ -102,7 +96,7 @@ export function AppShell({
       </aside>
 
       {/* Main Content */}
-      <div className="main">
+      <div className="main" id="main-content" tabIndex={-1}>
         {isSubPage && showBackButton && title && (
           <div className="page-header" style={{ marginBottom: "var(--space-4)" }}>
             <Link href={backHref} className="icon-btn" aria-label="Zurück">
@@ -127,7 +121,7 @@ export function AppShell({
         )}
 
         {isSubPage && !showBackButton && title && (
-          <h1 id="main-content" className="page-title" style={{ marginBottom: "var(--space-4)" }}>{title}</h1>
+          <h1 className="page-title" style={{ marginBottom: "var(--space-4)" }}>{title}</h1>
         )}
 
         <div className="content">{children}</div>
@@ -135,8 +129,7 @@ export function AppShell({
 
       {/* Mobile Bottom Navigation */}
       <nav className="bottom-nav" aria-label="Hauptnavigation">
-        {navigation.map((item) => {
-          const Icon = item.icon;
+        {navigation.slice(0, 2).map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link
@@ -145,8 +138,22 @@ export function AppShell({
               className={isActive ? "active" : ""}
               aria-current={isActive ? "page" : undefined}
             >
+              {"asset" in item ? <img src={item.asset} width="24" height="24" alt="" aria-hidden="true" /> : <item.icon size={24} aria-hidden="true" />}
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+        <Link href="/wardrobe/new" className="capture-link" aria-label="Kleidungsstück erfassen">
+          <Plus size={24} aria-hidden="true" />
+          <span>Erfassen</span>
+        </Link>
+        {navigation.slice(2).map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const Icon = "icon" in item ? item.icon : Leaf;
+          return (
+            <Link key={item.href} href={item.href} className={isActive ? "active" : ""} aria-current={isActive ? "page" : undefined}>
               <Icon size={24} aria-hidden="true" />
-              {item.label}
+              <span>{item.label}</span>
             </Link>
           );
         })}
@@ -155,9 +162,10 @@ export function AppShell({
   );
 }
 
-export function EmptyState({ text, href, action }: { text: string; href?: string; action?: string }) {
+export function EmptyState({ text, href, action, illustration = "/brand/kit/illustrations/clothes-set.svg" }: { text: string; href?: string; action?: string; illustration?: string }) {
   return (
     <div className="empty">
+      <img className="empty-illustration" src={illustration} alt="" aria-hidden="true" />
       <p>{text}</p>
       {href && <a className="btn wide" href={href}>{action ?? "Weiter"}</a>}
     </div>
