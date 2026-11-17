@@ -63,17 +63,7 @@ export function AppShell({
           </Link>
         )}
         <div className="header-actions">
-          <div className="desktop-account-menu"><AccountMenu household={household} unreadNotifications={unreadNotifications} /></div>
-          <Link 
-            href="/notifications" 
-            className="icon-btn" 
-            aria-label={unreadNotifications > 0 ? `${unreadNotifications} ungelesene Benachrichtigungen` : "Benachrichtigungen"}
-          >
-            <img src="/brand/kit/icons/bell.svg" width="24" height="24" alt="" aria-hidden="true" />
-            {unreadNotifications > 0 && (
-              <span className="badge">{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>
-            )}
-          </Link>
+          <AccountMenu household={household} unreadNotifications={unreadNotifications} />
         </div>
       </header>
 
@@ -159,7 +149,6 @@ export function AppShell({
             </Link>
           );
         })}
-        <div className="bottom-account-menu nav-account"><AccountMenu household={household} unreadNotifications={unreadNotifications} /></div>
       </nav>
     </main>
   );
