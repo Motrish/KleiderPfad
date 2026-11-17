@@ -336,7 +336,6 @@ input, select, textarea {
 }
 .account-menu a:hover, .account-menu button:hover { background: var(--primary-light); }
 .account-menu form { margin-top: var(--space-2); border-top: 1px solid var(--divider); }
-.bottom-account-menu .account-menu { inset: auto var(--space-4) calc(76px + env(safe-area-inset-bottom)) auto; }
 
 .header-actions {
   display: flex;
@@ -502,7 +501,6 @@ input, select, textarea {
   .bottom-nav {
     display: none;
   }
-  .desktop-account-menu { display: block; }
 }
 
 .bottom-nav a {
@@ -562,12 +560,8 @@ input, select, textarea {
 
 .bottom-nav .nav-overview { grid-column: 1; }
 .bottom-nav .nav-wardrobe { grid-column: 2; }
-.bottom-nav .nav-packages { grid-column: 4; }
-.bottom-nav .nav-family { grid-column: 5; }
-.bottom-nav .nav-account { grid-column: 6; }
-.bottom-nav .nav-account .account-trigger { min-width: 52px; min-height: var(--touch-comfortable); }
-.bottom-nav .nav-account .account-menu { inset: auto var(--space-4) calc(76px + env(safe-area-inset-bottom)) auto; }
-.desktop-account-menu { display: none; }
+.bottom-nav .nav-packages { grid-column: 5; }
+.bottom-nav .nav-family { grid-column: 6; }
 
 .bottom-nav .capture-link span {
   position: absolute;
