@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, FormEvent, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createItem } from "@/actions";
 import { Camera, Image, X, RotateCcw, Check } from "lucide-react";
 
@@ -29,6 +31,7 @@ interface NewItemFormProps {
 }
 
 export function NewItemForm({ householdName }: NewItemFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -124,7 +127,8 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
     setErrors({});
 
     try {
-      await createItem(formData);
+      const itemId = await createItem(formData);
+      router.push(`/wardrobe/${itemId}`);
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Fehler beim Speichern" });
       setIsSubmitting(false);
@@ -323,8 +327,8 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
             "✓ Kleidungsstück speichern"
           )}
         </button>
-        <button 
-          type="button"
+        <Link
+          href="/wardrobe"
           className="btn btn-outline wide" 
           style={{ 
             pointerEvents: isSubmitting ? "none" : "auto", 
@@ -332,10 +336,9 @@ export function NewItemForm({ householdName }: NewItemFormProps) {
             minHeight: "var(--touch-comfortable)",
             fontSize: "var(--text-base)"
           }}
-          onClick={() => window.history.back()}
         >
           Abbrechen
-        </button>
+        </Link>
       </div>
 
       <style jsx>{`

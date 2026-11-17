@@ -1,7 +1,8 @@
 import { createPackage } from "@/actions";
 import { getContext } from "@/lib/context";
 import { AppShell } from "@/components/AppShell";
-import { Package, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { Package } from "lucide-react";
 
 export default async function NewPackage() {
   const ctx = await getContext();
@@ -40,9 +41,9 @@ export default async function NewPackage() {
                 <span>Paket erstellen</span>
               </span>
             </button>
-            <button type="button" className="btn btn-outline wide" onClick={() => window.history.back()} style={{ minHeight: "var(--touch-comfortable)" }}>
+            <Link href="/packages" className="btn btn-outline wide" style={{ minHeight: "var(--touch-comfortable)" }}>
               Abbrechen
-            </button>
+            </Link>
           </div>
         </form>
       </section>
